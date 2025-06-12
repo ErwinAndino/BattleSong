@@ -1,4 +1,4 @@
-export default class Game extends Phaser.Scene {
+export default class game extends Phaser.Scene {
   constructor() {
     super("game");
   }
@@ -163,7 +163,7 @@ export default class Game extends Phaser.Scene {
           fill: "#ff0000",
         }).setOrigin(0.5, 0.5); // Center the text
         this.time.delayedCall(3000, () => {
-          this.scene.restart(); // Restart the scene if player health is zero
+          this.scene.start("store")
         });
 
       }
