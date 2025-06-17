@@ -17,6 +17,26 @@ export default class game extends Phaser.Scene {
       frameWidth: 32,
       frameHeight: 48,
     });
+        this.load.spritesheet("enemy01", "./public/assets/enemy_01_idle.png", {
+      frameWidth: 32,
+      frameHeight: 32,
+    });
+       this.load.spritesheet("enemy01_right", "./public/assets/enemy_01_attack_right.png", {
+      frameWidth: 32,
+      frameHeight: 32,
+    });
+           this.load.spritesheet("enemy01_left", "./public/assets/enemy_01_attack_left.png", {
+      frameWidth: 32,
+      frameHeight: 32,
+    });
+               this.load.spritesheet("enemy01_down", "./public/assets/enemy_01_attack_down.png", {
+      frameWidth: 32,
+      frameHeight: 32,
+    });
+                   this.load.spritesheet("enemy01_up", "./public/assets/enemy_01_attack_up.png", {
+      frameWidth: 32,
+      frameHeight: 32,
+    });
   }
 
   create() {
@@ -28,8 +48,49 @@ export default class game extends Phaser.Scene {
     this.add.image(1210, 540, "star").setOrigin(0.5, 0.5).setScale(4).setTint(0x000000);
     this.add.image(710, 540, "star").setOrigin(0.5, 0.5).setScale(4).setTint(0x000000);
 
-    this.enemy = this.add.image(960, 540, "square").setScale(4);
+    this.anims.create({
+      key: "enemy_idle",
+      frames: this.anims.generateFrameNumbers("enemy01", { start: 0, end: 3 }),
+      frameRate: 10,
+      repeat: -1,
+    });
 
+    this.anims.create({
+      key: "enemy_right",
+      frames: this.anims.generateFrameNumbers("enemy01_right", { start: 0, end: 3 }),
+      frameRate: 10,
+      repeat: 0,
+      hideOnComplete: false,
+    });
+
+        this.anims.create({
+      key: "enemy_left",
+      frames: this.anims.generateFrameNumbers("enemy01_left", { start: 0, end: 3 }),
+      frameRate: 10,
+      repeat: 0,
+      hideOnComplete: false,
+    });
+
+            this.anims.create({
+      key: "enemy_down",
+      frames: this.anims.generateFrameNumbers("enemy01_down", { start: 0, end: 3 }),
+      frameRate: 10,
+      repeat: 0,
+      hideOnComplete: false,
+    });
+
+                this.anims.create({
+      key: "enemy_up",
+      frames: this.anims.generateFrameNumbers("enemy01_up", { start: 0, end: 3 }),
+      frameRate: 10,
+      repeat: 0,
+      hideOnComplete: false,
+    });
+
+    
+
+    this.enemy = this.physics.add.sprite(960, 540, "enemy01", 0).setScale(8);
+    this.enemy.anims.play("enemy_idle",true);
     //declarar flechas
     this.cursors = this.input.keyboard.createCursorKeys();
     //declarar teclas WASD
@@ -40,7 +101,8 @@ export default class game extends Phaser.Scene {
 
     this.cooldown = 0
 
-
+this.attackSequence = [] //1, 1, 1, 1, 1, 2, 3, 4
+this.attackSequenceIndex = 0
 
     // variable para decidir de quien es el turno de atacar
     this.attackTurn = 1;
@@ -81,6 +143,10 @@ export default class game extends Phaser.Scene {
       fill: "#fff",
     }).setOrigin(1, 0.5); // Align to the top-left corner
 
+    this.stunnedText = this.add.text(960, 140, `Enemy stunned! \n attack now!`, {
+      fontSize: "64px",
+      fill: "#fff",
+    }).setOrigin(0.5 , 0.5).setVisible(false);
 
     // variable para cuando detener el ataque del enemigo
     this.stun = 0;
@@ -172,6 +238,8 @@ export default class game extends Phaser.Scene {
     //stun del enemigo
     if (this.stun >= 100) {
       console.log("Enemy is stunned!");
+      this.enemy.anims.play("enemy_idle",true);
+      this.stunnedText.setVisible(true);
       this.attackTurn = 2; // Change turn to player
       this.stun = 0; // Reset stun after it reaches 100
       this.attackTimer.paused = true;
@@ -187,6 +255,7 @@ export default class game extends Phaser.Scene {
       this.time.delayedCall(this.delay * 3, () => {
 
         this.stunText.setText(`Stun: ${this.stun}`); // Update stun display
+        this.stunnedText.setVisible(false);
         this.attackTurn = 1; // Change turn back to enemy
         // Reproducir los inputs grabados en orden y con su tiempo relativo
         if (!undefined){
@@ -245,21 +314,35 @@ this.stunInputs = [];
 
 
   enemyAttack() {
-    let attackType = Phaser.Math.Between(1, 4);
+    let attackType = 0
+  if (this.attackSequence && this.attackSequence.length > 0 
+    && this.attackSequenceIndex < this.attackSequence.length) {
+    attackType = this.attackSequence[this.attackSequenceIndex];
+    this.attackSequenceIndex = (this.attackSequenceIndex + 1);
+  } else {
+    attackType = Phaser.Math.Between(1, 6);
+  }
+
+console.log(attackType)
     let indicator;
     if (attackType === 1) {
-      indicator = this.attack.create(960, 140, "star").setScale(1).setAlpha(0.1).setTint(0xFFC300).setVisible(true); //W up
+      indicator = this.attack.create(960, 440, "star").setScale(1).setAlpha(0.1).setTint(0xFFC300).setVisible(true); //W up
+    this.enemy.anims.play("enemy_up",true);
     }
     if (attackType === 2) {
-      indicator = this.attack.create(560, 540, "star").setScale(1).setAlpha(0.1).setTint(0x0046ff).setVisible(true); //A left
+      indicator = this.attack.create(860, 540, "star").setScale(1).setAlpha(0.1).setTint(0x0046ff).setVisible(true); //A left
+    this.enemy.anims.play("enemy_left",true);
     }
     if (attackType === 3) {
-      indicator = this.attack.create(960, 940, "star").setScale(1).setAlpha(0.1).setTint(0x51ff00).setVisible(true); //S down
+      indicator = this.attack.create(960, 640, "star").setScale(1).setAlpha(0.1).setTint(0x51ff00).setVisible(true); //S down
+    this.enemy.anims.play("enemy_down",true);
     }
     if (attackType === 4) {
-      indicator = this.attack.create(1360, 540, "star").setScale(1).setAlpha(0.1).setTint(0xff2a00).setVisible(true); //D right
+      indicator = this.attack.create(1060, 540, "star").setScale(1).setAlpha(0.1).setTint(0xff2a00).setVisible(true); //D right
+      this.enemy.anims.play("enemy_right",true);
     }
     if (attackType > 4) {
+      this.enemy.anims.play("enemy_idle",true);
       return; // No attack if the random number is greater than 4
     }
     //determinar posicion final
@@ -271,21 +354,21 @@ this.stunInputs = [];
       Xfinal = 960;
       Xmedium = Xfinal;
       if (indicator.y >= 540) {
-        Yfinal = 540 + 200;
-        Ymedium = Yfinal + 50;
-      } else {
-        Yfinal = 540 - 200;
+        Yfinal = 540 + 300;
         Ymedium = Yfinal - 50;
+      } else {
+        Yfinal = 540 - 300;
+        Ymedium = Yfinal + 50;
       }
     } else {
       Yfinal = 540;
       Ymedium = Yfinal;
       if (indicator.x >= 960) {
-        Xfinal = 960 + 200;
-        Xmedium = Xfinal + 50;
-      } else {
-        Xfinal = 960 - 200;
+        Xfinal = 960 + 300;
         Xmedium = Xfinal - 50;
+      } else {
+        Xfinal = 960 - 300;
+        Xmedium = Xfinal + 50;
       }
     }
     //guarda que tipo de ataque es 
@@ -319,6 +402,7 @@ this.stunInputs = [];
           duration: this.delay * 0.5,
           ease: 'Linear',
           onComplete: () => {
+            
             if (indicator.active === true) {
               console.log("Player FAILS");
               indicator.destroy();
@@ -366,6 +450,7 @@ this.stunInputs = [];
           },
         });
       }
+     
     }
   }
 }
