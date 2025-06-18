@@ -4,7 +4,8 @@ export default class store extends Phaser.Scene {
   }
 
   init(data) {
-
+    this.score = data.score || 0;
+    this.money = data.money || 0;
   }
 
   preload() {
@@ -22,6 +23,21 @@ export default class store extends Phaser.Scene {
   create() {
     //crear fondo
     this.add.image(960, 540, "sky").setScale(2.5, 2);
+
+       this.moneyText = this.add.text(1880, 50, `Gold: ${this.money}`, {
+    fontSize: "40px",
+    color: "#0f0"
+  }).setOrigin(1, 0.5);
+
+   this.buyText = this.add.text(960, 200, `¡Compraste!`, {
+    fontSize: "40px",
+    color: "#0f0"
+  }).setOrigin(0.5, 0.5).setVisible(false);
+
+     this.cantBuyText = this.add.text(960, 200, `you dont have enough gold`, {
+    fontSize: "40px",
+    color: "#0f0"
+  }).setOrigin(0.5, 0.5).setVisible(false);
 
 
     //declarar flechas
@@ -97,11 +113,24 @@ const seleccionados = shuffled.slice(0, cantidad);
     this.highlightSelection();
   });
   this.input.keyboard.on('keydown-W', () => {
+    if (this.money >= 10) {
     this.buySelectedItem();
+    this.money -= 10
+    this.moneyText.setText(`Gold: ${this.money}`)
+    } else {
+      this.cantBuyText.setVisible(true)
+
+        this.time.delayedCall(3000, () => {
+         this.cantBuyText.setVisible(false)
+      });
+    }
   });
   this.input.keyboard.on('keydown-S', () => {
     
-    this.scene.start("game");
+    this.scene.start("game", {
+        score: this.score,
+        money: this.money, 
+      });
   });
 
   // Guarda los items seleccionados para referencia en compra
@@ -114,6 +143,7 @@ highlightSelection() {
   this.itemImages.forEach((obj, i) => {
     obj.img.setTint(i === this.selectedIndex ? 0xffff00 : 0xffffff); // Amarillo si seleccionado
     obj.label.setStyle({ fontStyle: i === this.selectedIndex ? 'bold' : 'normal' });
+    
   });
 }
 
@@ -121,10 +151,13 @@ highlightSelection() {
 buySelectedItem() {
   const item = this.seleccionados[this.selectedIndex];
   // Aquí va tu lógica de compra, por ejemplo:
-  this.add.text(960, 200, `¡Compraste: ${item.label}!`, {
-    fontSize: "40px",
-    color: "#0f0"
-  }).setOrigin(0.5, 0.5);
+  this.buyText.setText(`¡Compraste: ${item.label}!`)
+  this.buyText.setVisible(true)
+
+  this.time.delayedCall(3000, () => {
+         this.buyText.setVisible(false)
+      });
+
   // Puedes agregar lógica para quitar el item, actualizar inventario, etc.
 }
 }

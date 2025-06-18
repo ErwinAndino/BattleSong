@@ -4,7 +4,8 @@ export default class game extends Phaser.Scene {
   }
 
   init(data) {
-
+    this.score = data.score || 0;
+    this.money = data.money || 0;
   }
 
   preload() {
@@ -87,7 +88,15 @@ export default class game extends Phaser.Scene {
       hideOnComplete: false,
     });
 
-    
+    this.gameOver = true
+    this.stunWait = false
+    this.scoreCombo = 0
+    this.scoreMult = 1
+    this.scoreText = this.add.text(1888, 1000, `Score: ${this.score}`, {
+      fontSize: "32px",
+      fill: "#fff",
+    }).setOrigin(1, 0.5)
+
 
     this.enemy = this.physics.add.sprite(960, 540, "enemy01", 0).setScale(8);
     this.enemy.anims.play("enemy_idle",true);
@@ -179,7 +188,7 @@ this.attackSequenceIndex = 0
     } else { //si no esta activo el turn 2 se detectan normalmente
       // W
       if (Phaser.Input.Keyboard.JustDown(this.keyW) || (Phaser.Input.Keyboard.JustDown(this.cursors.up))) {
-        console.log("W or Up Arrow pressed");
+        
         this.playerAction = 1; // Set player action to 1 for upward attack
         this.timingDetector()
 
@@ -187,21 +196,21 @@ this.attackSequenceIndex = 0
 
       // A
       if (Phaser.Input.Keyboard.JustDown(this.keyA) || (Phaser.Input.Keyboard.JustDown(this.cursors.left))) {
-        console.log("A or Left Arrow pressed");
+        
         this.playerAction = 2; // Set player action to 2 for leftward attack
         this.timingDetector()
       }
 
       // S
       if (Phaser.Input.Keyboard.JustDown(this.keyS) || (Phaser.Input.Keyboard.JustDown(this.cursors.down))) {
-        console.log("S or Down Arrow pressed");
+        
         this.playerAction = 3; // Set player action to 3 for downward attack
         this.timingDetector()
       }
 
       // D
       if (Phaser.Input.Keyboard.JustDown(this.keyD) || (Phaser.Input.Keyboard.JustDown(this.cursors.right))) {
-        console.log("D or Right Arrow pressed");
+        
         this.playerAction = 4; // Set player action to 4 for rightward attack
         this.timingDetector()
       }
@@ -222,14 +231,20 @@ this.attackSequenceIndex = 0
     } else { //si el jugador no pierde puede ganar, se asegura que no pierda y gane al mismo tiempo
 
       //condicion de victoria al llegar la vida del enemigo a 0
-      if (this.healthEnemy <= 0) {
+      if (this.healthEnemy <= 0 && this.gameOver === true && this.stunWait === false) {
+      
         this.attackTimer.paused = true; // Stop the enemy attack timer
-        this.add.text(960, 440, "Game Over, you win", {
+        this.money += 10
+        this.add.text(960, 440, `Enemy defeated! \nyou found 10 gold!`, {
           fontSize: "64px",
           fill: "#ff0000",
         }).setOrigin(0.5, 0.5); // Center the text
+        this.gameOver = false
         this.time.delayedCall(3000, () => {
-          this.scene.start("store")
+          this.scene.start("store", {
+        score: this.score,
+        money: this.money, 
+      })
         });
 
       }
@@ -237,7 +252,7 @@ this.attackSequenceIndex = 0
 
     //stun del enemigo
     if (this.stun >= 100) {
-      console.log("Enemy is stunned!");
+      
       this.enemy.anims.play("enemy_idle",true);
       this.stunnedText.setVisible(true);
       this.attackTurn = 2; // Change turn to player
@@ -259,6 +274,7 @@ this.attackSequenceIndex = 0
         this.attackTurn = 1; // Change turn back to enemy
         // Reproducir los inputs grabados en orden y con su tiempo relativo
         if (!undefined){
+          this.stunWait = true;
         this.stunInputs.forEach(input => {
           this.time.delayedCall(input.time, () => {
             this.playerAttack(input.action); 
@@ -266,8 +282,12 @@ this.attackSequenceIndex = 0
         });
       }
         this.time.delayedCall(this.delay * 3, () => {
-this.attackTimer.paused = false;
 this.stunInputs = [];
+this.scoreCombo = 10;
+this.score += (this.scoreCombo * this.scoreMult);
+this.scoreText.setText(`Score: ${this.score}`);
+this.stunWait = false;
+this.attackTimer.paused = false;
           });
       });
     }
@@ -323,7 +343,7 @@ this.stunInputs = [];
     attackType = Phaser.Math.Between(1, 6);
   }
 
-console.log(attackType)
+
     let indicator;
     if (attackType === 1) {
       indicator = this.attack.create(960, 440, "star").setScale(1).setAlpha(0.1).setTint(0xFFC300).setVisible(true); //W up
@@ -404,8 +424,14 @@ console.log(attackType)
           onComplete: () => {
             
             if (indicator.active === true) {
-              console.log("Player FAILS");
+             
               indicator.destroy();
+              if (this.scoreMult > 3) {
+         this.scoreMult -= 2
+         } else {
+          this.scoreMult = 1
+         }
+         console.log(`el multiplicador de score es:${this.scoreMult}`)
               this.healthPlayer -=10
               this.healthPlayerText.setText(`Health: ${this.healthPlayer}`)
               this.enemy.setTint(0xff2a00); // Change enemy color to red on successful defense
@@ -427,7 +453,11 @@ console.log(attackType)
     if (oldestIndicator && oldestIndicator.active) {
       if (oldestIndicator.fail === false && oldestIndicator.attackType === this.playerAction) { // si no esta fallando y es el type correcto
         oldestIndicator.destroy();
-        console.log("Player successfully defends against the enemy attack!");
+        
+        if (this.scoreMult < 6) {
+        this.scoreMult +=1
+        }
+        console.log(`el multiplicador de score es:${this.scoreMult}`)
         this.enemy.setTint(0x00ff00); // Change enemy color to green on successful defense
         this.stun += 10
         this.stunText.setText(`Stun: ${this.stun}`)
@@ -438,9 +468,15 @@ console.log(attackType)
           },
         });
       } else {
-        console.log("Player FAILS");
+        
         oldestIndicator.destroy();
          this.healthPlayer -=10
+         if (this.scoreMult > 3) {
+         this.scoreMult -= 2
+         } else {
+          this.scoreMult = 1
+         }
+         console.log(`el multiplicador de score es:${this.scoreMult}`)
               this.healthPlayerText.setText(`Health: ${this.healthPlayer}`)
         this.enemy.setTint(0xff2a00); // Change enemy color to red on successful defense
         this.time.addEvent({
