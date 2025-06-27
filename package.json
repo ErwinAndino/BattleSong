@@ -1,0 +1,32 @@
+{
+  "name": "battlesong",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "\"# BattleSong\"",
+  "main": "main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "deploy": "gh-pages -d dist"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ErwinAndino/BattleSong.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ErwinAndino/BattleSong/issues"
+  },
+  "homepage": "https://github.com/ErwinAndino/BattleSong#readme",
+  "dependencies": {
+    "@tonejs/midi": "^2.0.28",
+    "tone": "^15.1.22",
+    "vite": "^6.3.5"
+  },
+  "devDependencies": {
+    "gh-pages": "^6.3.0"
+  }
+}
