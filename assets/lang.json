@@ -1,0 +1,14 @@
+{
+    "en": {
+        "pressButton": "Press any button to continue",
+        "start": "Start Game",
+        "settings": "Settings",
+        "highScore": "High score: {score}",
+        "exit": "Exit"
+    },
+    "es": {
+        "start": "Iniciar Juego",
+        "settings": "Opciones",
+        "exit": "Salir"
+    }
+}
