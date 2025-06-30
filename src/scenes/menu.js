@@ -13,23 +13,25 @@ export default class menu extends Phaser.Scene {
 
     preload() {
         this.load.image("sky", "assets/sky.png");
-        this.load.image("background_01", "assets/background_01.png");
+        this.load.image("background_menu", "assets/background_menu.png");
         this.load.image("platform", "assets/platform.png");
         this.load.image("star", "assets/star.png");
         this.load.image("bomb", "assets/bomb.png");
-        this.load.image("square", "assets/square.png");
+        this.load.image("block", "assets/block.png");
         this.load.image("indicator", "assets/indicator.png");
         this.load.image("indicator_attack", "assets/indicator_attack.png");
-
-
     }
 
     async create() {
 
         this.input.keyboard.once('keydown', async () => {
             await audioManager.start();
-             this.setVolumen(this.soundValue); // <-- Aplica el volumen aquí, después de cargar instrumentos
-             this.selector = 2;
+            this.setVolumen(this.soundValue); // <-- Aplica el volumen aquí, después de cargar instrumentos
+            this.selector = 2;
+            this.start.setVisible(true);
+            this.settings.setVisible(true);
+            this.hiScoreText.setVisible(true);
+            this.pressButton.setVisible(false);
         });
 
         //declarar flechas
@@ -44,27 +46,40 @@ export default class menu extends Phaser.Scene {
 
 
         //crear fondo
-        this.add.image(960, 540, "background_01").setScale(8).setOrigin(0.5, 0.5);
+        this.add.image(960, 540, "background_menu").setScale(8).setOrigin(0.5, 0.5);
 
         this.settingActive = false;
         this.soundActive = false;
 
-        this.battlesong = this.add.text(960, 200, "BattleSong", {
+        this.pressButton = this.add.text(960, 600, "Press any button to continue", {
             fontFamily: 'MelodicaRegular',
-            fontSize: "200px",
-        }).setOrigin(0.5, 0.5).setColor("#ffd700");
+            fontSize: "64px",
+        }).setOrigin(0.5, 0.5).setColor("#ffffff").setVisible(true);
 
-        this.start = this.add.text(960, 500, "Play", {
-            fontFamily: 'MelodicaRegular',
-            fontSize: "128px",
-        }).setOrigin(0.5, 0.5).setColor("#ffffff");
-
-        this.settings = this.add.text(960, 700, "Settings", {
+        this.start = this.add.text(960, 600, "Play", {
             fontFamily: 'MelodicaRegular',
             fontSize: "128px",
-        }).setOrigin(0.5, 0.5).setColor("#ffffff");
+        }).setOrigin(0.5, 0.5).setColor("#ffffff").setVisible(false);
 
-        this.settingsimage = this.add.image(960, 540, "square").setScale(16).setOrigin(0.5, 0.5).setVisible(false);
+        this.settings = this.add.text(960, 800, "Settings", {
+            fontFamily: 'MelodicaRegular',
+            fontSize: "128px",
+        }).setOrigin(0.5, 0.5).setColor("#ffffff").setVisible(false);
+
+        this.hiScoreText = this.add.text(20, 1000, `High score: ${this.hiScore}`, {
+            fontFamily: 'MelodicaRegular',
+            fontSize: "60px",
+        }).setOrigin(0, 0.5).setColor("#ffffff").setVisible(false);
+
+        // Crea un gráfico en la escena
+        this.overlay = this.add.graphics();
+
+        // Dibuja un rectángulo negro semi-transparente (alpha 0.5)
+        this.overlay.fillStyle(0x000000, 0.5);
+        this.overlay.fillRect(0, 0, this.cameras.main.width, this.cameras.main.height);
+        this.overlay.setVisible(false);
+
+        this.settingsimage = this.add.image(960, 540, "block").setScale(32).setOrigin(0.5, 0.5).setVisible(false);
 
         this.sound = this.add.text(960, 300, "Sound", {
             fontFamily: 'MelodicaRegular',
@@ -88,11 +103,8 @@ export default class menu extends Phaser.Scene {
 
         this.selector = 0;
 
-        this.hiScoreText = this.add.text(20, 1000, `High score: ${this.hiScore}`, {
-            fontFamily: 'MelodicaRegular',
-            fontSize: "60px",
-        }).setOrigin(0, 0.5).setColor("#ffffff");
- 
+
+
     }
     update() {
         if (this.soundActive) {
@@ -210,7 +222,8 @@ export default class menu extends Phaser.Scene {
     opciones() {
         this.settingActive = true;
         this.selector = 3;
-        this.settingsimage.setVisible(true)
+        this.settingsimage.setVisible(true);
+        this.overlay.setVisible(true);
         this.sound.setVisible(true);
         this.language.setVisible(true);
         this.back.setVisible(true);
@@ -219,6 +232,7 @@ export default class menu extends Phaser.Scene {
         this.settingActive = false;
         this.selector = 1;
         this.settingsimage.setVisible(false);
+        this.overlay.setVisible(false);
         this.sound.setVisible(false);
         this.language.setVisible(false);
         this.back.setVisible(false);

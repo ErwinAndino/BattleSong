@@ -23,6 +23,7 @@
   "homepage": "https://github.com/ErwinAndino/BattleSong#readme",
   "dependencies": {
     "@tonejs/midi": "^2.0.28",
+    "phaser": "^3.90.0",
     "tone": "^15.1.22",
     "vite": "^6.3.5"
   },

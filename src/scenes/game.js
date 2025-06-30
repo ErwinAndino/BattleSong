@@ -1,5 +1,6 @@
 import audioManager from '../audio/AudioManager.js';
 import tutorial from './tutorial.js';
+
 export default class game extends Phaser.Scene {
   constructor() {
     super("game");
@@ -63,6 +64,10 @@ export default class game extends Phaser.Scene {
       frameHeight: 32,
     });
     this.load.spritesheet("enemy01_up", "assets/enemy_01_attack_up.png", {
+      frameWidth: 32,
+      frameHeight: 32,
+    });
+    this.load.spritesheet("enemy01_defeated", "assets/enemy_01_defeated.png", {
       frameWidth: 32,
       frameHeight: 32,
     });
@@ -139,14 +144,35 @@ export default class game extends Phaser.Scene {
       hideOnComplete: false,
     });
 
+    this.anims.create({
+      key: "enemy_defeated",
+      frames: this.anims.generateFrameNumbers("enemy01_defeated", { start: 0, end: 3 }),
+      frameRate: 10,
+      repeat: -1,
+    });
 
 
 
-    this.enemy = this.physics.add.sprite(960, 540, "enemy01", 0).setScale(12);
-    this.enemy.anims.play("enemy_idle", true);
+
+    this.enemy = this.physics.add.sprite(960, 440, "enemy01", 0).setScale(8).setAlpha(0);
+
+    this.tweens.add({
+      targets: this.enemy,
+      x: 960, // Posición final
+      y: 540,
+      alpha: 1,
+      scale: 12,
+      duration: 1000,
+      ease: 'Power2',
+      onComplete: () => {
+        this.enemy.anims.play("enemy_idle", true);
+      }
+    });
+
+
 
     this.enemy.on('animationcomplete', (anim, frame) => {
-      if (anim.key !== "enemy_idle") {
+      if (anim.key !== "enemy_idle" || anim.key !== "enemy_defeated") {
         // Guarda el nombre de la animación que terminó
         const finishedAnim = anim.key;
         this.time.delayedCall(400, () => {
@@ -437,12 +463,14 @@ export default class game extends Phaser.Scene {
     if (!this.stopTimer) {
       this.elapsedTime = audioManager.currentTime();
     }
-    if (this.elapsedTime >= this.totalTime && !this.enemyDefeatedTriggered) {
+    if (this.elapsedTime >= this.totalTime) {
       this.battlebarLeft.setFrame(2);
       this.battlebarMiddle.setFrame(3);
       this.battlebarRight.setFrame(2);
-      this.enemyDefeatedTriggered = true;
-      this.enemyDefeated();
+      if (!this.enemyDefeatedTriggered) {
+        this.enemyDefeatedTriggered = true;
+        this.enemyDefeated();
+      }
     } else if (this.elapsedTime >= this.totalTime * 0.8) {
       this.battlebarLeft.setFrame(2);
       this.battlebarMiddle.setFrame(3);
@@ -762,6 +790,17 @@ export default class game extends Phaser.Scene {
     this.attackTimer.paused = true; // Stop the enemy attack timer
     this.stopTimer = true;
     audioManager.stopAll(); // <--- Detiene la música y los MIDIs
+
+    this.enemy.anims.play("enemy_defeated", true);
+    this.time.delayedCall(2000, () => {
+      this.tweens.add({
+        targets: this.enemy,
+        alpha: 0,
+        scale: 12,
+        duration: 4000,
+        ease: 'Power2',
+      });
+    })
     this.money += this.moneyQuantity; // Incrementa el dinero del jugador
     this.difficulty += 1; // Incrementa la dificultad del juego
 

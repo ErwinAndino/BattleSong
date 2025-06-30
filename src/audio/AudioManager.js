@@ -170,66 +170,66 @@ class AudioManager {
     this.setDurations[this.currentSetIndex] = duration; // <-- Guarda la duración
 
     setTimeout(async () => {
-          if (this.cancelQueue) {
-      console.log("⏹️ Cola de MIDIs cancelada.");
-      return;
-    }
+      if (this.cancelQueue) {
+        console.log("⏹️ Cola de MIDIs cancelada.");
+        return;
+      }
       this.currentSetIndex++;
       await this._playCurrentSet();
     }, duration * 1000);
   }
 
   stopAll() {
-  if (this.transport.state !== "stopped") {
-    this.transport.stop();
-    this.transport.cancel();
+    if (this.transport.state !== "stopped") {
+      this.transport.stop();
+      this.transport.cancel();
+    }
+    // Si tienes partes guardadas:
+    if (this.parts) {
+      this.parts.forEach(part => part?.dispose());
+      this.parts = [];
+    }
+    this.cancelQueue = true; // <--- Detiene la cola
   }
-  // Si tienes partes guardadas:
-  if (this.parts) {
-    this.parts.forEach(part => part?.dispose());
-    this.parts = [];
-  }
-  this.cancelQueue = true; // <--- Detiene la cola
-}
 
-async getMIDIDuration(midiPaths) {
-  const midiDurations = await Promise.all(
-    midiPaths.map(async (path) => {
-      const response = await fetch(path);
-      const buffer = await response.arrayBuffer();
-      const midi = new Midi(buffer);
+  async getMIDIDuration(midiPaths) {
+    const midiDurations = await Promise.all(
+      midiPaths.map(async (path) => {
+        const response = await fetch(path);
+        const buffer = await response.arrayBuffer();
+        const midi = new Midi(buffer);
 
-      let maxTime = 0;
-      midi.tracks.forEach(track => {
-        track.notes.forEach(note => {
-          const endTime = note.time + note.duration;
-          if (endTime > maxTime) {
-            maxTime = endTime;
-          }
+        let maxTime = 0;
+        midi.tracks.forEach(track => {
+          track.notes.forEach(note => {
+            const endTime = note.time + note.duration;
+            if (endTime > maxTime) {
+              maxTime = endTime;
+            }
+          });
         });
-      });
 
-      
 
-      return maxTime;
-    })
-  );
 
-  const totalDuration = Math.max(...midiDurations); // en segundos relativos al tempo
-  return totalDuration;
-}
+        return maxTime;
+      })
+    );
 
-currentTime() {
-  let elapsed = 0;
-  for (let i = 0; i < this.currentSetIndex; i++) {
-    elapsed += this.setDurations[i] || 0;
+    const totalDuration = Math.max(...midiDurations); // en segundos relativos al tempo
+    return totalDuration;
   }
-  // Solo suma el tiempo actual del set si la cola no terminó
-  if (this.currentSetIndex < this.midiQueue.length) {
-    elapsed += this.transport.seconds;
+
+  currentTime() {
+    let elapsed = 0;
+    for (let i = 0; i < this.currentSetIndex; i++) {
+      elapsed += this.setDurations[i] || 0;
+    }
+    // Solo suma el tiempo actual del set si la cola no terminó
+    if (this.currentSetIndex < this.midiQueue.length) {
+      elapsed += this.transport.seconds;
+    }
+    return elapsed;
   }
-  return elapsed;
-}
 }
 
 const audioManager = new AudioManager();

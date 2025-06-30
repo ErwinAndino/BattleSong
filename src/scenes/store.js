@@ -10,7 +10,7 @@ export default class store extends Phaser.Scene {
     this.soundValue = data.soundValue || 100; // Valor inicial del volumen
     this.tutorialComplete = data.tutorialComplete || false; // Valor inicial del tutorial
     this.healthPlayer = data.healthPlayer || 100; // Valor inicial de la salud del jugador
-     this.difficulty = data.difficulty || 0; // Dificultad del juego
+    this.difficulty = data.difficulty || 0; // Dificultad del juego
   }
 
   preload() {
@@ -19,10 +19,6 @@ export default class store extends Phaser.Scene {
     this.load.image("star", "public/assets/star.png");
     this.load.image("bomb", "public/assets/bomb.png");
     this.load.image("square", "public/assets/square.png");
-    this.load.spritesheet("dude", "./public/assets/dude.png", {
-      frameWidth: 32,
-      frameHeight: 48,
-    });
   }
 
   create() {
@@ -44,13 +40,13 @@ export default class store extends Phaser.Scene {
 
 
 
-     this.moneyText = this.add.text(150, 130, `Gold: ${this.money}`, {
+    this.moneyText = this.add.text(150, 130, `Gold: ${this.money}`, {
       fontFamily: 'MelodicaRegular',
       fontSize: "40px",
       fill: "#fff",
     }).setOrigin(0.5, 0.5); // Align to the top-left corner
 
-    
+
     this.scoreText = this.add.text(150, 170, `Score: ${this.score}`, {
       fontFamily: 'MelodicaRegular',
       fontSize: "40px",
@@ -133,7 +129,7 @@ export default class store extends Phaser.Scene {
 
 
 
-  
+
 
     // Guarda los items seleccionados para referencia en compra
     this.seleccionados = seleccionados;
@@ -153,11 +149,11 @@ export default class store extends Phaser.Scene {
         });
       }
     }
-     if (Phaser.Input.Keyboard.JustDown(this.keyA) || Phaser.Input.Keyboard.JustDown(this.cursors.left)) {
+    if (Phaser.Input.Keyboard.JustDown(this.keyA) || Phaser.Input.Keyboard.JustDown(this.cursors.left)) {
       this.selectedIndex = (this.selectedIndex - 1 + this.itemImages.length) % this.itemImages.length;
       this.highlightSelection();
     }
-     if (Phaser.Input.Keyboard.JustDown(this.keyS) || Phaser.Input.Keyboard.JustDown(this.cursors.down)) {
+    if (Phaser.Input.Keyboard.JustDown(this.keyS) || Phaser.Input.Keyboard.JustDown(this.cursors.down)) {
       this.scene.start("game", {
         score: this.score,
         money: this.money,
@@ -168,7 +164,7 @@ export default class store extends Phaser.Scene {
         difficulty: this.difficulty
       });
     }
-     if (Phaser.Input.Keyboard.JustDown(this.keyD) || Phaser.Input.Keyboard.JustDown(this.cursors.right)) {
+    if (Phaser.Input.Keyboard.JustDown(this.keyD) || Phaser.Input.Keyboard.JustDown(this.cursors.right)) {
       this.selectedIndex = (this.selectedIndex + 1) % this.itemImages.length;
       this.highlightSelection();
     }
