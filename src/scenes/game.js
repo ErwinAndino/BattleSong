@@ -75,6 +75,10 @@ export default class game extends Phaser.Scene {
 
   async create() {
 
+    audioManager.currentSetIndex = 0;
+    audioManager.setDurations = [];
+    audioManager.transport.position = 0; // Reinicia el transporte de Tone.js
+
     this.delayBase = Phaser.Math.Between(1000, 1200) / (1 + (this.difficulty * 0.1)); // Base delay between enemy attacks, adjusted by difficulty
     this.delayMult = 1;
     this.delay = this.delayBase / this.delayMult;
@@ -172,7 +176,7 @@ export default class game extends Phaser.Scene {
 
 
     this.enemy.on('animationcomplete', (anim, frame) => {
-      if (anim.key !== "enemy_idle" || anim.key !== "enemy_defeated") {
+      if (anim.key !== "enemy_idle" && anim.key !== "enemy_defeated") {
         // Guarda el nombre de la animación que terminó
         const finishedAnim = anim.key;
         this.time.delayedCall(400, () => {
@@ -756,6 +760,11 @@ export default class game extends Phaser.Scene {
     });
   }
   gameOver() {
+    if (this.enemyDefeatedTriggered) {
+      this.healthPlayer = 10
+      this.healthPlayerText.setText(t("health", { value: this.healthPlayer }))
+      return
+    }
     this.attackTimer.paused = true; // Stop the enemy attack timer
     this.stopTimer = true;
     audioManager.stopAll(); // <--- Detiene la música y los MIDIs
@@ -779,6 +788,9 @@ export default class game extends Phaser.Scene {
     });
   }
   enemyDefeated() {
+    if (this.gameOverTriggered) {
+      return
+    }
     this.attackTimer.paused = true; // Stop the enemy attack timer
     this.stopTimer = true;
     audioManager.stopAll(); // <--- Detiene la música y los MIDIs
