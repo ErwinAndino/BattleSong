@@ -12,7 +12,10 @@ class AudioManager {
     this.callbacksQueue = [];
     this.currentSetIndex = 0;
     this.cancelQueue = false;
-    this.setDurations = []; // <-- Reinicia las duraciones
+    this.setDurations = [];
+    this._pausedByVisibility = false;
+
+    this.setupVisibilityHandler();
   }
 
   async start() {
@@ -138,18 +141,17 @@ class AudioManager {
     this.transport.start();
     console.log(`Reproduciendo ${this.parts.length} MIDIs simultáneamente.`);
 
-    // Calcular duración real del conjunto de notas
     const maxTime = results.reduce((max, res) => {
       if (!res?.notes) return max;
       const lastNoteEnd = res.notes.reduce((m, n) => Math.max(m, n.time + n.duration), 0);
       return Math.max(max, lastNoteEnd);
     }, 0);
 
-    return maxTime; // margen de seguridad
+    return maxTime;
   }
 
   async playMultipleMIDIsWithQueue(midiQueue, callbacksQueue) {
-    this.cancelQueue = false; // Reset al iniciar
+    this.cancelQueue = false;
     this.midiQueue = midiQueue;
     this.callbacksQueue = callbacksQueue;
     this.currentSetIndex = 0;
@@ -166,10 +168,9 @@ class AudioManager {
     const currentCallbacks = this.callbacksQueue[this.currentSetIndex] || [];
 
     const duration = await this.playMultipleMIDIs(currentMIDIs, currentCallbacks);
+    this.setDurations[this.currentSetIndex] = duration;
 
-    this.setDurations[this.currentSetIndex] = duration; // <-- Guarda la duración
-
-    setTimeout(async () => {
+    const timeoutID = setTimeout(async () => {
       if (this.cancelQueue) {
         console.log("⏹️ Cola de MIDIs cancelada.");
         return;
@@ -177,6 +178,8 @@ class AudioManager {
       this.currentSetIndex++;
       await this._playCurrentSet();
     }, duration * 1000);
+
+    this.currentTimeout = timeoutID;
   }
 
   stopAll() {
@@ -184,12 +187,15 @@ class AudioManager {
       this.transport.stop();
       this.transport.cancel();
     }
-    // Si tienes partes guardadas:
     if (this.parts) {
       this.parts.forEach(part => part?.dispose());
       this.parts = [];
     }
-    this.cancelQueue = true; // <--- Detiene la cola
+    this.cancelQueue = true;
+    if (this.currentTimeout) {
+      clearTimeout(this.currentTimeout);
+      this.currentTimeout = null;
+    }
   }
 
   async getMIDIDuration(midiPaths) {
@@ -209,14 +215,11 @@ class AudioManager {
           });
         });
 
-
-
         return maxTime;
       })
     );
 
-    const totalDuration = Math.max(...midiDurations); // en segundos relativos al tempo
-    return totalDuration;
+    return Math.max(...midiDurations);
   }
 
   currentTime() {
@@ -224,11 +227,37 @@ class AudioManager {
     for (let i = 0; i < this.currentSetIndex; i++) {
       elapsed += this.setDurations[i] || 0;
     }
-    // Solo suma el tiempo actual del set si la cola no terminó
     if (this.currentSetIndex < this.midiQueue.length) {
       elapsed += this.transport.seconds;
     }
     return elapsed;
+  }
+
+  setupVisibilityHandler() {
+    if (this._visibilityHandlerSet) return;
+    this._visibilityHandlerSet = true;
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && this.transport.state === 'started') {
+        console.log("🔇 Pestaña oculta, pausa...");
+        this._pausedByVisibility = true;
+        this.transport.pause();
+        if (this.currentTimeout) {
+          clearTimeout(this.currentTimeout);
+          this.currentTimeout = null;
+        }
+      } else if (!document.hidden && this._pausedByVisibility) {
+        console.log("🔊 Pestaña visible, reanuda...");
+        this.transport.start();
+        const remainingDuration = this.setDurations[this.currentSetIndex] - this.transport.seconds;
+        this.currentTimeout = setTimeout(async () => {
+          if (this.cancelQueue) return;
+          this.currentSetIndex++;
+          await this._playCurrentSet();
+        }, remainingDuration * 1000);
+        this._pausedByVisibility = false;
+      }
+    });
   }
 }
 

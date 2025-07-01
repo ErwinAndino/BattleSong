@@ -14,7 +14,6 @@ export default class tutorial extends Phaser.Scene {
 
         this.load.image("background_tutorial", "assets/background_tutorial.png");
         this.load.image("star", "assets/star.png");
-        this.load.image("square", "assets/square.png");
         this.load.image("indicator", "assets/indicator.png");
         this.load.image("indicator_attack", "assets/indicator_attack.png");
 

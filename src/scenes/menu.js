@@ -3,6 +3,7 @@ import { t, setLang, getLang, loadTranslations } from '../lang.js';
 export default class menu extends Phaser.Scene {
     constructor() {
         super("menu");
+        this.ready = false;
     }
 
     init(data) {
@@ -23,7 +24,7 @@ export default class menu extends Phaser.Scene {
 
     async create() {
         await document.fonts.ready;
-        loadTranslations(this); // ya no es async
+        await loadTranslations(this); // ya no es async
         this.input.keyboard.once('keydown', async () => {
             await audioManager.start();
             this.setVolumen(this.soundValue); // <-- Aplica el volumen aquí, después de cargar instrumentos
@@ -33,6 +34,8 @@ export default class menu extends Phaser.Scene {
             this.hiScoreText.setVisible(true);
             this.pressButton.setVisible(false);
         });
+
+
 
         //declarar flechas
         this.cursors = this.input.keyboard.createCursorKeys();
@@ -107,16 +110,17 @@ export default class menu extends Phaser.Scene {
             fontSize: "128px",
         }).setOrigin(0.5, 0.5).setColor("#ffffff").setVisible(false);
 
-        this.selector = 0;
 
         if (getLang() === 'es') {
             this.languageControl.setText('Español');
         } else {
             this.languageControl.setText('English');
         }
-
+        this.ready = true;
+        this.selector = 0;
     }
     update() {
+        if (!this.ready) return;
         if (this.idiomaActive === true) {
             this.languageControl.setVisible(true);
             this.languageControl.setAlpha(1);
@@ -232,13 +236,14 @@ export default class menu extends Phaser.Scene {
                 }
             }
         }
-
-        if (this.selector === 2) {
-            this.start.setColor("#ffd700");
-            this.settings.setColor("#ffffff");
-        } else if (this.selector === 1) {
-            this.start.setColor("#ffffff");
-            this.settings.setColor("#ffd700");
+        if (this.start != null && this.settings != null) {
+            if (this.selector === 2) {
+                this.start.setColor("#ffd700");
+                this.settings.setColor("#ffffff");
+            } else if (this.selector === 1) {
+                this.start.setColor("#ffffff");
+                this.settings.setColor("#ffd700");
+            }
         }
 
         if (this.settingActive) {
@@ -377,6 +382,7 @@ export default class menu extends Phaser.Scene {
     }
 
     startGame() {
+        this.selector = 0;
         if (!this.tutorialComplete) {
             this.scene.start("tutorial", { hiScore: this.hiScore, soundValue: this.soundValue });
         } else {

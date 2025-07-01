@@ -17,8 +17,8 @@ export default class store extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image("background", "public/assets/background_shop.png");
-    this.load.image("potion", "public/assets/item_potion.png");
+    this.load.image("background", "assets/background_shop.png");
+    this.load.image("potion", "assets/item_potion.png");
     this.load.image("block", "assets/block.png");
 
     this.load.spritesheet("buttons", "assets/buttons.png", {
@@ -135,6 +135,7 @@ export default class store extends Phaser.Scene {
       this.itemImages.push({ img, label });
     }
     this.selectedIndex = 0;
+    this.item = this.seleccionados[this.selectedIndex];
     this.highlightSelection();
 
 
@@ -196,6 +197,7 @@ export default class store extends Phaser.Scene {
     }
     if (Phaser.Input.Keyboard.JustDown(this.keyA) || Phaser.Input.Keyboard.JustDown(this.cursors.left)) {
       this.selectedIndex = (this.selectedIndex - 1 + this.itemImages.length) % this.itemImages.length;
+      this.item = this.seleccionados[this.selectedIndex];
       this.highlightSelection();
     }
     if (Phaser.Input.Keyboard.JustDown(this.keyS) || Phaser.Input.Keyboard.JustDown(this.cursors.down)) {
@@ -214,6 +216,7 @@ export default class store extends Phaser.Scene {
     }
     if (Phaser.Input.Keyboard.JustDown(this.keyD) || Phaser.Input.Keyboard.JustDown(this.cursors.right)) {
       this.selectedIndex = (this.selectedIndex + 1) % this.itemImages.length;
+      this.item = this.seleccionados[this.selectedIndex];
       this.highlightSelection();
     }
 
@@ -269,7 +272,7 @@ export default class store extends Phaser.Scene {
     this.itemImages.forEach((obj, i) => {
       obj.label.setStyle({ fontStyle: i === this.selectedIndex ? 'bold' : 'normal' });
       obj.label.setColor(i === this.selectedIndex ? "#ffd700" : "#fff"); // Amarillo si seleccionado, blanco si no
-      this.item = this.seleccionados[this.selectedIndex];
+
 
 
       // Calcula la posición Y objetivo
