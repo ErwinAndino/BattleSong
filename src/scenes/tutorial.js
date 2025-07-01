@@ -1,4 +1,5 @@
 import audioManager from '../audio/AudioManager.js';
+import { t } from '../lang.js';
 export default class tutorial extends Phaser.Scene {
     constructor() {
         super("tutorial");
@@ -74,6 +75,13 @@ export default class tutorial extends Phaser.Scene {
 
         let locationTR = 1850
         let locationTL = 70
+        this.delay = 1000; // Tiempo en milisegundos para el tween
+        this.attack = this.physics.add.group(); //grupo de los indicadores de ataque
+
+        this.attackSequenceExecuted = false;
+        this.healthbarSequenceExecuted = false;
+        this.timeBarSequenceExecuted = false;
+
 
         this.indicatorUp = this.add.image(960, 160, "indicator").setOrigin(0.5, 0.5).setScale(12).setAngle(270).setVisible(false).setAlpha(0); // W 380  W160 A580 S920 D1340
         this.indicatorLeft = this.add.image(580, 540, "indicator").setOrigin(0.5, 0.5).setScale(12).setAngle(180).setVisible(false).setAlpha(0); // A
@@ -89,23 +97,23 @@ export default class tutorial extends Phaser.Scene {
         this.battlebarRight = this.add.sprite(locationTR, 80, "battlebar_right", 0).setOrigin(1, 0.5).setScale(6).setVisible(false).setAlpha(0); //192 en scale 6
 
 
-        this.healthPlayerText = this.add.text(340, 74, `HP / 100`, {
+        this.healthPlayerText = this.add.text(340, 74, t("health", { value: 100 }), {
             fontFamily: 'MelodicaRegular',
             fontSize: "40px",
             fill: "#fff",
         }).setOrigin(0.5, 0.5).setVisible(false).setAlpha(0); // Align to the top-left corner
 
-        this.moneyText = this.add.text(150, 130, `Gold: 0`, {
+        this.moneyText = this.add.text(120, 130, t("money", { value: 0 }), {
             fontFamily: 'MelodicaRegular',
             fontSize: "40px",
             fill: "#fff",
-        }).setOrigin(0.5, 0.5).setVisible(false).setAlpha(0); // Align to the top-left corner
+        }).setOrigin(0, 0.5).setVisible(false).setAlpha(0); // Align to the top-left corner
 
-        this.scoreText = this.add.text(150, 170, `Score: 0`, {
+        this.scoreText = this.add.text(120, 170, t("score", { value: 0 }), {
             fontFamily: 'MelodicaRegular',
             fontSize: "40px",
             fill: "#fff",
-        }).setOrigin(0.5, 0.5).setVisible(false).setAlpha(0); // Align to the top-left corner
+        }).setOrigin(0, 0.5).setVisible(false).setAlpha(0); // Align to the top-left corner
 
 
         this.anims.create({
@@ -146,7 +154,10 @@ export default class tutorial extends Phaser.Scene {
         });
 
 
+
+
         this.buttons = this.add.sprite(1850, 1000, "buttons", 0).setScale(4).setOrigin(0.5, 0.5);
+        this.buttons2 = this.add.sprite(960, 540, "buttons", 0).setScale(4).setOrigin(0.5, 0.5).setVisible(false).setAlpha(0);
         this.buttons.anims.play("buttons_right", true);
         //declarar flechas
         this.cursors = this.input.keyboard.createCursorKeys();
@@ -161,26 +172,28 @@ export default class tutorial extends Phaser.Scene {
         this.tutorialStage = 0
 
         this.textContent = [
-            "El reino esta siendo devastado por fuerzas malvadas las cuales poseen una debilidad muy particular.",
-            "La musica! la cual confunde a los mounstruos y hace que dejen de atacar",
-            "Tu mision es enfrentarte a estos enemigos y tocar una melodia para persuadirlos a dejar de atacar",
-            "Para lograrlo deberas defenderte de sus ataques identificando su direccion y contratacar en el instante exacto.",
-            "si recibes un ataque del enemigo te danara y al reducir la totalidad de tu vitalidad seras derrotado",
-            "para derrotar el enemigo debes sobrevivir sus ataques por la duracion de tu cancion",
-            "En tu aventura encontraras mercaderes con los cuales podras adquirir nuevo equipamiento",
-            "Ten en cuenta que a medida que avances te encontraras con enemigos mas fuertes que atacaran mas ferozmente y resistiran mas fuerte a tu melodia",
-            "tu desempeno sera medido de acuerdo a tus aciertos y seras recompensado acordemente",
-            "Buena suerte, musico de la corte",
+            t("tutorial2"),
+            t("tutorial3"),
+            t("tutorial4"),
+            t("tutorial5"),
+            t("tutorial6"),
+            t("tutorial7"),
+            t("tutorial8"),
+            t("tutorial9"),
+            t("tutorial10"),
+            t("tutorial11"),
         ]
 
-        this.textBox = this.add.text(960, 740, "Bienvenido musico de la corte, tus servicios son necesitados hoy mas que nunca.", {
+        this.textBox = this.add.text(960, 940, t("tutorial1"), {
             fontSize: "64px",
             fontFamily: 'MelodicaRegular',
-            color: "#ffffff",
+            color: "#ffd700",
             wordWrap: { width: 1200, useAdvancedWrap: true }, // <-- Aquí defines el ancho del "contenedor"
-            align: 'left'
+            align: 'justify',
+            stroke: "#000000",         // Color del borde 
+            strokeThickness: 8         // Grosor del borde
         }
-        ).setOrigin(0.5, 0.5).setAlpha(0);
+        ).setOrigin(0.5, 0.5).setAlpha(0).setDepth(10);
 
         this.tweens.add({
             targets: this.textBox,
@@ -210,16 +223,16 @@ export default class tutorial extends Phaser.Scene {
         if (Phaser.Input.Keyboard.JustDown(this.keyD) || Phaser.Input.Keyboard.JustDown(this.cursors.right)) {
             this.nextText();
         }
-        if (this.tutorialStage === 3) {
-            this.attack();
+        if (this.tutorialStage === 4) {
+            this.attackSequence();
         }
 
         if (this.tutorialStage === 5) {
-            this.healthbar();
+            this.healthbarSequence();
         }
 
         if (this.tutorialStage === 6) {
-            this.timebar();
+            this.timebarSequence();
 
         }
         if (this.tutorialStage === 7) {
@@ -244,7 +257,6 @@ export default class tutorial extends Phaser.Scene {
     }
     nextText() {
         const next = this.textContent.shift();
-        console.log(this.tutorialStage)
 
 
         if (next !== undefined) {
@@ -274,24 +286,51 @@ export default class tutorial extends Phaser.Scene {
             // O mostrar un mensaje, botón, etc.
         }
     }
-    attack() {
+    attackSequence() {
+        if (this.attackSequenceExecuted) {
+            return;
+        }
+        this.attackSequenceExecuted = true;
+
         this.indicatorUp.setVisible(true);
         this.indicatorLeft.setVisible(true);
         this.indicatorDown.setVisible(true);
         this.indicatorRight.setVisible(true);
+        this.buttons2.setVisible(true);
 
         this.tweens.add({
-            targets: [this.indicatorUp, this.indicatorLeft, this.indicatorDown, this.indicatorRight], // varios objetos 
+            targets: [this.indicatorUp, this.indicatorLeft, this.indicatorDown, this.indicatorRight, this.buttons2], // varios objetos 
             alpha: 1,
             duration: 1000,
             ease: 'Power2',
         });
+
+        this.enemyAttack(3)
+
+        this.time.delayedCall(2000, () => {
+            this.enemyAttack(1)
+        });
+        this.time.delayedCall(4000, () => {
+            this.enemyAttack(0)
+        });
+        this.time.delayedCall(6000, () => {
+            this.enemyAttack(2)
+        });
+        this.time.delayedCall(8000, () => {
+            this.buttons2.setVisible(false);
+        });
     }
-    healthbar() {
+    healthbarSequence() {
+        if (this.healthbarSequenceExecuted) {
+            return;
+        }
+        this.healthbarSequenceExecuted = true;
+
         this.hpbarLeft.setVisible(true);
         this.hpbarMiddle.setVisible(true);
         this.hpbarRight.setVisible(true);
         this.healthPlayerText.setVisible(true);
+
 
         this.tweens.add({
             targets: [this.hpbarLeft, this.hpbarMiddle, this.hpbarRight, this.healthPlayerText], // varios objetos 
@@ -300,7 +339,12 @@ export default class tutorial extends Phaser.Scene {
             ease: 'Power2',
         });
     }
-    timebar() {
+    timebarSequence() {
+        if (this.timeBarSequenceExecuted) {
+            return;
+        }
+        this.timeBarSequenceExecuted = true;
+
         this.battlebarLeft.setVisible(true);
         this.battlebarMiddle.setVisible(true);
         this.battlebarRight.setVisible(true);
@@ -310,6 +354,103 @@ export default class tutorial extends Phaser.Scene {
             alpha: 1,
             duration: 1000,
             ease: 'Power2',
+        });
+    }
+
+    enemyAttack(midiIndex, note) {
+        let attackType = midiIndex
+        let indicator;
+        if (attackType === 0) { // W 160 A 580 S 920 D 1340
+            indicator = this.attack.create(960, 384, "indicator_attack").setScale(10).setAlpha(0.1).setTint(0xFFC300).setVisible(true).setAngle(270).setDepth(1); //W up
+            this.buttons2.anims.play("buttons_up", true);
+        }
+        if (attackType === 1) {
+            indicator = this.attack.create(804, 540, "indicator_attack").setScale(10).setAlpha(0.1).setTint(0x0046ff).setVisible(true).setAngle(180).setDepth(1); //A left
+            this.buttons2.anims.play("buttons_left", true);
+        }
+        if (attackType === 2) {
+            indicator = this.attack.create(960, 696, "indicator_attack").setScale(10).setAlpha(0.1).setTint(0x51ff00).setVisible(true).setAngle(90).setDepth(1); //S down
+            this.buttons2.anims.play("buttons_down", true);
+        }
+        if (attackType === 3) {
+            indicator = this.attack.create(1116, 540, "indicator_attack").setScale(10).setAlpha(0.1).setTint(0xff2a00).setVisible(true).setAngle(0).setDepth(1); //D right
+            this.buttons2.anims.play("buttons_right", true);
+        }
+        if (attackType > 3) {
+            return; // No attack if the random number is greater than 4
+        }
+        //determinar posicion final
+        let Xfinal = 0;
+        let Yfinal = 0;
+        let Xmedium = 0;
+        let Ymedium = 0;
+        if (indicator.x === 960) {
+            Xfinal = 960;
+            Xmedium = Xfinal;
+            if (indicator.y >= 540) {
+                Yfinal = 1070;
+                Ymedium = Yfinal - 150; //920
+            } else {
+                Yfinal = 10;
+                Ymedium = Yfinal + 150; //160
+            }
+        } else {
+            Yfinal = 540;
+            Ymedium = Yfinal;
+            if (indicator.x >= 960) {
+                Xfinal = 1490;
+                Xmedium = Xfinal - 150; //1340
+            } else {
+                Xfinal = 430;
+                Xmedium = Xfinal + 150; // 580
+            }
+        }
+
+        this.time.delayedCall(this.delay - ((this.delay * 0.2) + 100), () => {
+            this.tweens.add({
+                targets: indicator,
+                scale: 12,
+                duration: 100,
+                ease: 'Power2',
+            });
+
+        });
+
+        //animar
+        this.tweens.add({
+            targets: indicator,
+            x: Xmedium, // Posición final
+            y: Ymedium, // Posición final
+            alpha: 1, // Opacidad final
+            duration: this.delay, // Tiempo en ms
+            ease: 'Linear',
+            onComplete: () => {
+                this.time.delayedCall((this.delay * 0.2) - 100, () => {
+                    this.tweens.add({
+                        targets: indicator,
+                        scale: 10,
+                        duration: 100,
+                        ease: 'Power2',
+                    });
+                });
+                // Segundo tween: desvanecer (último 50% del tiempo)
+                this.tweens.add({
+                    targets: indicator,
+                    x: Xfinal, // Posición final
+                    y: Yfinal, // Posición final
+                    alpha: 0,   // Se desvanece
+                    duration: this.delay * 0.5,
+                    ease: 'Linear',
+                    onComplete: () => {
+
+                        if (indicator.active === true) {
+
+                            indicator.destroy();
+
+                        }
+                    }
+                });
+            }
         });
     }
 }

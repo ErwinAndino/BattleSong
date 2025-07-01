@@ -1,3 +1,6 @@
+import { t } from '../lang.js';
+import audioManager from '../audio/AudioManager.js';
+
 export default class store extends Phaser.Scene {
   constructor() {
     super("store");
@@ -15,15 +18,42 @@ export default class store extends Phaser.Scene {
 
   preload() {
     this.load.image("background", "public/assets/background_shop.png");
-    this.load.image("platform", "public/assets/platform.png");
-    this.load.image("star", "public/assets/star.png");
-    this.load.image("bomb", "public/assets/bomb.png");
-    this.load.image("square", "public/assets/square.png");
+    this.load.image("potion", "public/assets/item_potion.png");
+    this.load.image("block", "assets/block.png");
+
+    this.load.spritesheet("buttons", "assets/buttons.png", {
+      frameWidth: 32,
+      frameHeight: 32,
+    });
   }
 
   create() {
     //crear fondo
     this.add.image(960, 540, "background").setScale(8);
+
+
+    this.add.text(960, 50, t("store"), {
+      fontFamily: 'MelodicaRegular',
+      fontSize: "64px",
+      fill: "#fff"
+    }).setOrigin(0.5, 0.5);
+
+    this.controls = this.add.image(1820, 100, "buttons", 0).setScale(4).setOrigin(0.5, 0.5);
+
+
+    this.add.text(1820, 20, t("buy"), {
+      fontFamily: 'MelodicaRegular',
+      fontSize: "32px",
+      fill: "#fff"
+    }).setOrigin(0.5, 0.5);
+
+    this.add.text(1820, 180, t("exit"), {
+      fontFamily: 'MelodicaRegular',
+      fontSize: "32px",
+      fill: "#fff"
+    }).setOrigin(0.5, 0.5);
+
+    this.exitActive = false;
 
     let locationTR = 1850
     let locationTL = 70
@@ -32,7 +62,7 @@ export default class store extends Phaser.Scene {
     this.hpbarMiddle = this.add.sprite(locationTL + 192, 75, "hpbar_middle", 0).setOrigin(0, 0.5).setScale(6);
     this.hpbarRight = this.add.sprite(locationTL + 384, 75, "hpbar_right", 0).setOrigin(0, 0.5).setScale(6);
 
-    this.healthPlayerText = this.add.text(340, 74, `HP / ${this.healthPlayer}`, {
+    this.healthPlayerText = this.add.text(340, 74, t("health", { value: this.healthPlayer }), {
       fontFamily: 'MelodicaRegular',
       fontSize: "40px",
       fill: "#fff",
@@ -40,25 +70,25 @@ export default class store extends Phaser.Scene {
 
 
 
-    this.moneyText = this.add.text(150, 130, `Gold: ${this.money}`, {
+    this.moneyText = this.add.text(120, 130, t("money", { value: this.money }), {
       fontFamily: 'MelodicaRegular',
       fontSize: "40px",
       fill: "#fff",
-    }).setOrigin(0.5, 0.5); // Align to the top-left corner
+    }).setOrigin(0, 0.5); // Align to the top-left corner
 
 
-    this.scoreText = this.add.text(150, 170, `Score: ${this.score}`, {
+    this.scoreText = this.add.text(120, 170, t("score", { value: this.score }), {
       fontFamily: 'MelodicaRegular',
       fontSize: "40px",
       fill: "#fff",
-    }).setOrigin(0.5, 0.5); // Align to the top-left corner
+    }).setOrigin(0, 0.5); // Align to the top-left corner
 
-    this.buyText = this.add.text(960, 200, `¡Compraste!`, {
+    this.buyText = this.add.text(960, 200, t("bought"), {
       fontSize: "40px",
       color: "#0f0"
     }).setOrigin(0.5, 0.5).setVisible(false);
 
-    this.cantBuyText = this.add.text(960, 200, `you dont have enough gold`, {
+    this.cantBuyText = this.add.text(960, 200, t("cantBuy"), {
       fontSize: "40px",
       color: "#0f0"
     }).setOrigin(0.5, 0.5).setVisible(false);
@@ -74,78 +104,93 @@ export default class store extends Phaser.Scene {
 
     // Ejemplo de datos (puedes reemplazarlo por tus propios datos)
     const items = [
-      { key: "star", label: "Estrella" },
-      { key: "bomb", label: "Bomba" },
-      { key: "square", label: "Cuadro" },
-      { key: "square", label: "Cuadro" },
-      { key: "square", label: "Cuadro" },
+      { key: "potion", label: t("potion"), price: 50 },
+      { key: "potion", label: t("potion"), price: 25 },
+      { key: "potion", label: t("potion"), price: 50 },
+      { key: "potion", label: t("potion"), price: 50 },
+      { key: "potion", label: t("potion"), price: 10 },
 
       // Agrega más objetos aquí según lo necesites
     ];
 
-    // 1. Genera un número aleatorio entre 1 y el total de items
-    const cantidad = Phaser.Math.Between(2, 4);
+    // Mezcla el array y toma los primeros 3
+    const shuffled = Phaser.Utils.Array.Shuffle(items);
+    const seleccionados = shuffled.slice(0, 3);
+    this.seleccionados = seleccionados;
 
-
-    // 2. Mezcla el array de items (Fisher-Yates shuffle)
-    const shuffled = items.slice();
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-
-    // 3. Selecciona los primeros 'cantidad' items
-    const seleccionados = shuffled.slice(0, cantidad);
-
-
-    const total = seleccionados.length;
-    const spacing = 220; // Espacio base entre imágenes
-    const baseScale = 1.2; // Escala base
-    const minScale = 0.5; // Escala mínima permitida
-
-    // Calcula la escala para que quepan todas en pantalla
-    let scale = Math.min(baseScale, (1800 / (total * spacing)));
-    scale = Math.max(scale, minScale);
-
-    // Centra el grupo en pantalla
-    const startX = 960 - ((total - 1) * spacing * scale) / 2;
-    const y = 700;
-
-    // Guardar referencias visuales y el índice seleccionado
     this.itemImages = [];
-    this.selectedIndex = 0;
+    const gap = 500;
+    const totalWidth = gap * (this.seleccionados.length - 1);
+    const startX = 960 - totalWidth / 2; // 960 es el centro de la pantalla
 
-    seleccionados.forEach((item, i) => {
-      const img = this.add.image(startX + i * spacing * scale, y, item.key).setScale(scale);
-      const label = this.add.text(img.x, img.y + 70 * scale, item.label, {
-        fontSize: `${32 * scale}px`,
-        color: "#fff"
-      }).setOrigin(0.5, 0);
+    for (let i = 0; i < this.seleccionados.length; i++) {
+      const item = this.seleccionados[i];
+      const x = startX + i * gap;
+      const img = this.add.image(x, 640, item.key).setScale(8);
+      const label = this.add.text(x, 800, `${item.label} - ${item.price}`, {
+        fontFamily: 'MelodicaRegular',
+        fontSize: "64px",
+        fill: "#fff"
+      }).setOrigin(0.5, 0.5);
       this.itemImages.push({ img, label });
-    });
-
-    // Resalta el primer item
+    }
+    this.selectedIndex = 0;
     this.highlightSelection();
 
 
+    // Crea un gráfico en la escena
+    this.overlay = this.add.graphics();
 
+    // Dibuja un rectángulo negro semi-transparente (alpha 0.5)
+    this.overlay.fillStyle(0x000000, 0.5);
+    this.overlay.fillRect(0, 0, this.cameras.main.width, this.cameras.main.height);
+    this.overlay.setVisible(false);
 
+    this.exitImage = this.add.image(960, 540, "block").setScale(32).setOrigin(0.5, 0.5).setVisible(false);
+    this.exitText = this.add.text(960, 340, t("exitShop"), {
+      fontFamily: 'MelodicaRegular',
+      fontSize: "64px",
+      fill: "#fff"
+    }).setOrigin(0.5, 0.5).setVisible(false);
 
-    // Guarda los items seleccionados para referencia en compra
-    this.seleccionados = seleccionados;
+    this.controlsExit = this.add.image(960, 640, "buttons", 0).setScale(8).setOrigin(0.5, 0.5).setVisible(false);
+
+    this.exitNo = this.add.text(960, 480, t("no"), {
+      fontFamily: 'MelodicaRegular',
+      fontSize: "64px",
+      fill: "#fff"
+    }).setOrigin(0.5, 0.5).setVisible(false);
+
+    this.exitYes = this.add.text(960, 800, t("yes"), {
+      fontFamily: 'MelodicaRegular',
+      fontSize: "64px",
+      fill: "#fff"
+    }).setOrigin(0.5, 0.5).setVisible(false);
+
   }
   update() {
 
     if (Phaser.Input.Keyboard.JustDown(this.keyW) || Phaser.Input.Keyboard.JustDown(this.cursors.up)) {
-      if (this.money >= 10) {
+      if (this.exitActive) {
+        this.exitActive = false;
+        this.exitText.setVisible(false);
+        this.exitImage.setVisible(false);
+        this.controlsExit.setVisible(false);
+        this.exitNo.setVisible(false);
+        this.exitYes.setVisible(false);
+        this.overlay.setVisible(false);
+        return
+      }
+      if (this.money >= this.item.price) {
         this.buySelectedItem();
-        this.money -= 10
-        this.moneyText.setText(`Gold: ${this.money}`)
+        this.money -= this.item.price;
+        this.moneyText.setText(t("money", { value: this.money }))
       } else {
-        this.cantBuyText.setVisible(true)
+        this.buyText.setVisible(false);
+        this.cantBuyText.setVisible(true);
 
         this.time.delayedCall(3000, () => {
-          this.cantBuyText.setVisible(false)
+          this.cantBuyText.setVisible(false);
         });
       }
     }
@@ -154,15 +199,18 @@ export default class store extends Phaser.Scene {
       this.highlightSelection();
     }
     if (Phaser.Input.Keyboard.JustDown(this.keyS) || Phaser.Input.Keyboard.JustDown(this.cursors.down)) {
-      this.scene.start("game", {
-        score: this.score,
-        money: this.money,
-        soundValue: this.soundValue,
-        tutorialComplete: this.tutorialComplete,
-        healthPlayer: this.healthPlayer,
-        hiScore: this.hiScore,
-        difficulty: this.difficulty
-      });
+      if (this.exitActive) {
+        this.exit();
+      } else {
+        this.exitActive = true;
+        this.exitText.setVisible(true);
+        this.exitImage.setVisible(true);
+        this.controlsExit.setVisible(true);
+        this.exitNo.setVisible(true);
+        this.exitYes.setVisible(true);
+        this.overlay.setVisible(true);
+      }
+
     }
     if (Phaser.Input.Keyboard.JustDown(this.keyD) || Phaser.Input.Keyboard.JustDown(this.cursors.right)) {
       this.selectedIndex = (this.selectedIndex + 1) % this.itemImages.length;
@@ -219,23 +267,81 @@ export default class store extends Phaser.Scene {
   }
   highlightSelection() {
     this.itemImages.forEach((obj, i) => {
-      obj.img.setTint(i === this.selectedIndex ? 0xffff00 : 0xffffff); // Amarillo si seleccionado
       obj.label.setStyle({ fontStyle: i === this.selectedIndex ? 'bold' : 'normal' });
+      obj.label.setColor(i === this.selectedIndex ? "#ffd700" : "#fff"); // Amarillo si seleccionado, blanco si no
+      this.item = this.seleccionados[this.selectedIndex];
+
+
+      // Calcula la posición Y objetivo
+      const targetY = i === this.selectedIndex ? 540 : 640; // Arriba si seleccionado, abajo si no
+
+      // Tween para la imagen
+      this.tweens.add({
+        targets: obj.img,
+        y: targetY,
+        duration: 200,
+        ease: 'Power2'
+      });
+
+      // Tween para el label (ajusta si quieres que suba también)
+      this.tweens.add({
+        targets: obj.label,
+        y: i === this.selectedIndex ? 700 : 800,
+        duration: 200,
+        ease: 'Power2'
+      });
 
     });
   }
 
   // Acción de compra
   buySelectedItem() {
-    const item = this.seleccionados[this.selectedIndex];
+
+    if (this.item.key === "potion") {
+      this.healthPlayer += 30;
+      if (this.healthPlayer > 100) {
+        this.healthPlayer = 100; // Limitar la salud máxima a 100
+      }
+      this.healthPlayerText.setText(t("health", { value: this.healthPlayer }));
+    }
     // Aquí va tu lógica de compra, por ejemplo:
-    this.buyText.setText(`¡Compraste: ${item.label}!`)
-    this.buyText.setVisible(true)
+    this.buyText.setText(t("bought", { value: this.item.label }));
+
+    this.cantBuyText.setVisible(false);
+    this.buyText.setVisible(true);
 
     this.time.delayedCall(3000, () => {
       this.buyText.setVisible(false)
     });
 
-    // Puedes agregar lógica para quitar el item, actualizar inventario, etc.
+    // Eliminar visualmente el ítem comprado
+    this.itemImages[this.selectedIndex].img.destroy();
+    this.itemImages[this.selectedIndex].label.destroy();
+
+    // Eliminar el ítem de los arrays
+    this.seleccionados.splice(this.selectedIndex, 1);
+    this.itemImages.splice(this.selectedIndex, 1);
+
+    // Ajustar el índice seleccionado
+    if (this.selectedIndex >= this.itemImages.length) {
+      this.selectedIndex = Math.max(0, this.itemImages.length - 1);
+    }
+
+    // Actualizar la selección visual si quedan ítems
+    if (this.itemImages.length > 0) {
+      this.highlightSelection();
+    }
+  }
+
+  exit() {
+    this.scene.start("game", {
+      score: this.score,
+      money: this.money,
+      soundValue: this.soundValue,
+      tutorialComplete: this.tutorialComplete,
+      healthPlayer: this.healthPlayer,
+      hiScore: this.hiScore,
+      difficulty: this.difficulty
+    });
   }
 }

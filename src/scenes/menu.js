@@ -1,4 +1,5 @@
 import audioManager from '../audio/AudioManager.js';
+import { t, setLang, getLang, loadTranslations } from '../lang.js';
 export default class menu extends Phaser.Scene {
     constructor() {
         super("menu");
@@ -12,18 +13,16 @@ export default class menu extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image("sky", "assets/sky.png");
         this.load.image("background_menu", "assets/background_menu.png");
-        this.load.image("platform", "assets/platform.png");
         this.load.image("star", "assets/star.png");
-        this.load.image("bomb", "assets/bomb.png");
         this.load.image("block", "assets/block.png");
         this.load.image("indicator", "assets/indicator.png");
         this.load.image("indicator_attack", "assets/indicator_attack.png");
+        this.load.json('translations', 'assets/lang.json');
     }
 
     async create() {
-
+        loadTranslations(this); // ya no es async
         this.input.keyboard.once('keydown', async () => {
             await audioManager.start();
             this.setVolumen(this.soundValue); // <-- Aplica el volumen aquí, después de cargar instrumentos
@@ -50,23 +49,24 @@ export default class menu extends Phaser.Scene {
 
         this.settingActive = false;
         this.soundActive = false;
+        this.idiomaActive = false;
 
-        this.pressButton = this.add.text(960, 600, "Press any button to continue", {
+        this.pressButton = this.add.text(960, 600, t("pressButton"), {
             fontFamily: 'MelodicaRegular',
             fontSize: "64px",
         }).setOrigin(0.5, 0.5).setColor("#ffffff").setVisible(true);
 
-        this.start = this.add.text(960, 600, "Play", {
+        this.start = this.add.text(960, 600, t("start"), {
             fontFamily: 'MelodicaRegular',
             fontSize: "128px",
         }).setOrigin(0.5, 0.5).setColor("#ffffff").setVisible(false);
 
-        this.settings = this.add.text(960, 800, "Settings", {
+        this.settings = this.add.text(960, 800, t("settings"), {
             fontFamily: 'MelodicaRegular',
             fontSize: "128px",
         }).setOrigin(0.5, 0.5).setColor("#ffffff").setVisible(false);
 
-        this.hiScoreText = this.add.text(20, 1000, `High score: ${this.hiScore}`, {
+        this.hiScoreText = this.add.text(20, 1000, t("highScore", { score: this.hiScore }), {
             fontFamily: 'MelodicaRegular',
             fontSize: "60px",
         }).setOrigin(0, 0.5).setColor("#ffffff").setVisible(false);
@@ -81,7 +81,7 @@ export default class menu extends Phaser.Scene {
 
         this.settingsimage = this.add.image(960, 540, "block").setScale(32).setOrigin(0.5, 0.5).setVisible(false);
 
-        this.sound = this.add.text(960, 300, "Sound", {
+        this.sound = this.add.text(960, 300, t("sound"), {
             fontFamily: 'MelodicaRegular',
             fontSize: "128px",
         }).setOrigin(0.5, 0.5).setColor("#ffffff").setVisible(false);
@@ -91,23 +91,63 @@ export default class menu extends Phaser.Scene {
             fontSize: "128px",
         }).setOrigin(0.5, 0.5).setColor("#ffd700").setVisible(false).setAlpha(0);
 
-        this.language = this.add.text(960, 500, "Language", {
+        this.language = this.add.text(960, 500, t("language"), {
             fontFamily: 'MelodicaRegular',
             fontSize: "128px",
-        }).setOrigin(0.5, 0.5).setColor("#ffffff").setVisible(false);;
+        }).setOrigin(0.5, 0.5).setColor("#ffffff").setVisible(false);
 
-        this.back = this.add.text(960, 700, "back", {
+        this.languageControl = this.add.text(960, 500, "Undefined", {
             fontFamily: 'MelodicaRegular',
             fontSize: "128px",
-        }).setOrigin(0.5, 0.5).setColor("#ffffff").setVisible(false);;
+        }).setOrigin(0.5, 0.5).setColor("#ffd700").setVisible(false).setAlpha(0);
+
+        this.back = this.add.text(960, 700, t("back"), {
+            fontFamily: 'MelodicaRegular',
+            fontSize: "128px",
+        }).setOrigin(0.5, 0.5).setColor("#ffffff").setVisible(false);
 
         this.selector = 0;
 
-
+        if (getLang() === 'es') {
+            this.languageControl.setText('Español');
+        } else {
+            this.languageControl.setText('English');
+        }
 
     }
     update() {
-        if (this.soundActive) {
+        if (this.idiomaActive === true) {
+            this.languageControl.setVisible(true);
+            this.languageControl.setAlpha(1);
+            if (Phaser.Input.Keyboard.JustDown(this.keyW) || Phaser.Input.Keyboard.JustDown(this.cursors.up)) {
+                if (getLang() === 'es') {
+                    setLang('en');
+                    this.languageControl.setText('English');
+                    this.updateText();
+                } else {
+                    setLang('es');
+                    this.languageControl.setText('Español');
+                    this.updateText();
+                }
+            }
+            if (Phaser.Input.Keyboard.JustDown(this.keyA) || Phaser.Input.Keyboard.JustDown(this.cursors.left)) {
+                this.exitIdioma();
+            }
+            if (Phaser.Input.Keyboard.JustDown(this.keyS) || Phaser.Input.Keyboard.JustDown(this.cursors.down)) {
+                if (getLang() === 'es') {
+                    setLang('en');
+                    this.languageControl.setText('English');
+                    this.updateText();
+                } else {
+                    setLang('es');
+                    this.languageControl.setText('Español');
+                    this.updateText();
+                }
+            }
+            if (Phaser.Input.Keyboard.JustDown(this.keyD) || Phaser.Input.Keyboard.JustDown(this.cursors.right)) {
+                this.exitIdioma();
+            }
+        } else if (this.soundActive) {
             this.soundControl.setVisible(true);
             this.soundControl.setAlpha(1);
             if (Phaser.Input.Keyboard.JustDown(this.keyW) || Phaser.Input.Keyboard.JustDown(this.cursors.up)) {
@@ -143,7 +183,7 @@ export default class menu extends Phaser.Scene {
                 if (this.selector === 3) {
                     this.volumen(); // Cambia a la escena de configuración
                 } else if (this.selector === 2) {
-
+                    this.idioma();
                 } else if (this.selector === 1) {
                     this.exitOpciones(); // Cambia a la escena de configuración
                 }
@@ -158,7 +198,7 @@ export default class menu extends Phaser.Scene {
                 if (this.selector === 3) {
                     this.volumen();
                 } else if (this.selector === 2) {
-
+                    this.idioma();
                 } else if (this.selector === 1) {
                     this.exitOpciones(); // Cambia a la escena de configuración
                 }
@@ -256,10 +296,6 @@ export default class menu extends Phaser.Scene {
             duration: 500,
             ease: 'Power2'
         });
-        // audioManager.setVolume(0, 0.5); // Ajusta el volumen del sintetizador principal
-        // audioManager.setVolume(1, 0.5); // Ajusta el volumen del sintetizador polifónico
-        // audioManager.setVolume(2, 0.5); // Ajusta el volumen del sampler
-        // audioManager.setVolume(3, 0.5); // Ajusta el volumen del sintetizador adicional
     }
     exitVolumen() {
         this.soundActive = false;
@@ -293,11 +329,67 @@ export default class menu extends Phaser.Scene {
         audioManager.setVolume(3, soundValue * 1);
     }
 
+    idioma() {
+        this.idiomaActive = true;
+
+        this.tweens.add({
+            targets: this.language,
+            x: 750,
+            y: 500,
+            duration: 500,
+            ease: 'Power2',
+        })
+        this.languageControl.setVisible(true);
+
+        this.tweens.add({
+            targets: this.languageControl,
+            x: 1200,
+            y: 500,
+            alpha: 1,
+            duration: 500,
+            ease: 'Power2'
+        });
+    }
+
+    exitIdioma() {
+        this.idiomaActive = false;
+
+        this.tweens.add({
+            targets: this.language,
+            x: 960,
+            y: 500,
+            duration: 500,
+            ease: 'Power2',
+        })
+
+        this.tweens.add({
+            targets: this.languageControl,
+            x: 960,
+            y: 500,
+            alpha: 0,
+            duration: 500,
+            ease: 'Power2',
+            onComplete: () => {
+                this.languageControl.setVisible(false);
+            }
+        });
+    }
+
     startGame() {
         if (!this.tutorialComplete) {
             this.scene.start("tutorial", { hiScore: this.hiScore, soundValue: this.soundValue });
         } else {
             this.scene.start("game", { hiScore: this.hiScore, soundValue: this.soundValue, tutorialComplete: this.tutorialComplete });
         }
+    }
+
+    updateText() {
+        this.start.setText(t("start"));
+        this.settings.setText(t("settings"));
+        this.hiScoreText.setText(t("highScore", { score: this.hiScore }));
+        this.sound.setText(t("sound"));
+        this.language.setText(t("language"));
+        this.back.setText(t("back"));
+        this.pressButton.setText(t("pressButton"));
     }
 }

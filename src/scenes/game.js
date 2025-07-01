@@ -1,5 +1,5 @@
 import audioManager from '../audio/AudioManager.js';
-import tutorial from './tutorial.js';
+import { t } from '../lang.js';
 
 export default class game extends Phaser.Scene {
   constructor() {
@@ -162,7 +162,7 @@ export default class game extends Phaser.Scene {
       y: 540,
       alpha: 1,
       scale: 12,
-      duration: 1000,
+      duration: 2000,
       ease: 'Power2',
       onComplete: () => {
         this.enemy.anims.play("enemy_idle", true);
@@ -192,9 +192,6 @@ export default class game extends Phaser.Scene {
     this.keyS = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
     this.keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
 
-    this.keyZ = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Z);
-    this.keyX = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.X);
-
     this.cooldown = 0
 
     this.attackSequence = [] //1, 1, 1, 1, 1, 2, 3, 4
@@ -217,26 +214,26 @@ export default class game extends Phaser.Scene {
       loop: true,
     });
     // mostrar la vida del jugador
-    this.healthPlayerText = this.add.text(340, 74, `HP / ${this.healthPlayer}`, {
+    this.healthPlayerText = this.add.text(340, 74, t("health", { value: this.healthPlayer }), {
       fontFamily: 'MelodicaRegular',
       fontSize: "40px",
       fill: "#fff",
     }).setOrigin(0.5, 0.5); // Align to the top-left corner
 
-    this.moneyText = this.add.text(150, 130, `Gold: ${this.money}`, {
+    this.moneyText = this.add.text(120, 130, t("money", { value: this.money }), {
       fontFamily: 'MelodicaRegular',
       fontSize: "40px",
       fill: "#fff",
-    }).setOrigin(0.5, 0.5); // Align to the top-left corner
+    }).setOrigin(0, 0.5); // Align to the top-left corner
 
-    this.scoreText = this.add.text(150, 170, `Score: ${this.score}`, {
+    this.scoreText = this.add.text(120, 170, t("score", { value: this.score }), {
       fontFamily: 'MelodicaRegular',
       fontSize: "40px",
       fill: "#fff",
-    }).setOrigin(0.5, 0.5); // Align to the top-left corner
+    }).setOrigin(0, 0.5); // Align to the top-left corner
 
 
-    this.gameOverText = this.add.text(960, 340, `Game Over`, {
+    this.gameOverText = this.add.text(960, 340, t("gameOver"), {
       fontFamily: 'MelodicaRegular',
       fontSize: "128px",
       fill: "#ff0000",
@@ -244,7 +241,7 @@ export default class game extends Phaser.Scene {
       align: 'center'
     }).setOrigin(0.5, 0.5).setVisible(false).setAlpha(0); // Center the text
 
-    this.enemyDefeatedText = this.add.text(960, 340, `Enemigo derrotado`, {
+    this.enemyDefeatedText = this.add.text(960, 340, t("victory"), {
       fontFamily: 'MelodicaRegular',
       fontSize: "128px",
       fill: "#ffd700",
@@ -252,7 +249,7 @@ export default class game extends Phaser.Scene {
       align: 'center'
     }).setOrigin(0.5, 0.5).setVisible(false).setAlpha(0); // Center the text
 
-    this.enemyDefeatedSubText = this.add.text(960, 640, `La criatura te deja una propina de ${this.moneyQuantity} de oro!`, {
+    this.enemyDefeatedSubText = this.add.text(960, 640, t("tips", { value: this.moneyQuantity }), {
       fontFamily: 'MelodicaRegular',
       fontSize: "32px",
       fill: "#ffd700",
@@ -356,8 +353,9 @@ export default class game extends Phaser.Scene {
     const callbacksQueue = midiQueue.map(set => set.map(() => noteCallback));
 
     // Inicia reproducción en cola
-    await audioManager.playMultipleMIDIsWithQueue(midiQueue, callbacksQueue);
-
+    this.time.delayedCall(2000, async () => {
+      await audioManager.playMultipleMIDIsWithQueue(midiQueue, callbacksQueue);
+    });
     const allDurations = await Promise.all(
       midiQueue.map(set => audioManager.getMIDIDuration(set.filter(path => path)))
     );
@@ -369,12 +367,6 @@ export default class game extends Phaser.Scene {
   }
   update() {
 
-    if (Phaser.Input.Keyboard.JustDown(this.keyZ)) {
-      this.enemyDefeated();
-    }
-    if (Phaser.Input.Keyboard.JustDown(this.keyX)) {
-      this.gameOver();
-    }
     //Detectar teclas
     // W
     if (Phaser.Input.Keyboard.JustDown(this.keyW) || (Phaser.Input.Keyboard.JustDown(this.cursors.up))) {
@@ -602,7 +594,7 @@ export default class game extends Phaser.Scene {
               indicator.destroy();
               this.scoreMult = 1
               this.healthPlayer -= 10
-              this.healthPlayerText.setText(`HP /  ${this.healthPlayer}`)
+              this.healthPlayerText.setText(t("health", { value: this.healthPlayer }))
               this.hpbarLeft.setTint(0xff2a00); // Change enemy color to red on successful defense
               this.hpbarMiddle.setTint(0xff2a00); // Change enemy color to red on successful defense
               this.hpbarRight.setTint(0xff2a00); // Change enemy color to red on successful defense
@@ -638,7 +630,7 @@ export default class game extends Phaser.Scene {
       if (oldestIndicator.fail === false && oldestIndicator.type === this.playerAction) { // si no esta fallando y es el type correcto
         oldestIndicator.destroy();
         this.score += 10 * this.scoreMult; // Incrementa el score
-        this.scoreText.setText(`Score: ${this.score}`); // Actualiza el texto del score
+        this.scoreText.setText(t("score", { value: this.score })); // Actualiza el texto del score
         if (this.scoreMult < 2) {
           this.scoreMult += 0.1
         }
@@ -693,7 +685,7 @@ export default class game extends Phaser.Scene {
         });
 
         this.scoreMult = 1;
-        this.healthPlayerText.setText(`HP /  ${this.healthPlayer}`)
+        this.healthPlayerText.setText(t("health", { value: this.healthPlayer }))
 
 
       }
