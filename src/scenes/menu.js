@@ -22,6 +22,7 @@ export default class menu extends Phaser.Scene {
     }
 
     async create() {
+        await document.fonts.ready;
         loadTranslations(this); // ya no es async
         this.input.keyboard.once('keydown', async () => {
             await audioManager.start();
