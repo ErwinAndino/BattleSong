@@ -13,7 +13,7 @@ export default class store extends Phaser.Scene {
     this.soundValue = data.soundValue || 100; // Valor inicial del volumen
     this.tutorialComplete = data.tutorialComplete || false; // Valor inicial del tutorial
     this.healthPlayer = data.healthPlayer || 100; // Valor inicial de la salud del jugador
-    this.difficulty = data.difficulty || 0; // Dificultad del juego
+    this.difficultyLevel = data.difficultyLevel || 0; // Dificultad del juego
   }
 
   preload() {
@@ -25,6 +25,7 @@ export default class store extends Phaser.Scene {
       frameWidth: 32,
       frameHeight: 32,
     });
+
   }
 
   create() {
@@ -68,20 +69,22 @@ export default class store extends Phaser.Scene {
       fill: "#fff",
     }).setOrigin(0.5, 0.5);
 
+    this.moneyText = this.add.text(180, 138, this.money, {
+      fontFamily: 'MelodicaRegular',
+      fontSize: "40px",
+      fill: "#fff",
+    }).setOrigin(0, 0.5); // Align to the top-left corner x 50 y -2
 
+    this.moneyImage = this.physics.add.sprite(140, 140, "gold", 0).setScale(2).setOrigin(0.5, 0.5);
+    this.moneyImage.anims.play("gold_anim", true);
 
-    this.moneyText = this.add.text(120, 130, t("money", { value: this.money }), {
+    this.scoreText = this.add.text(120, 190, t("score", { value: this.score }), {
       fontFamily: 'MelodicaRegular',
       fontSize: "40px",
       fill: "#fff",
     }).setOrigin(0, 0.5); // Align to the top-left corner
 
 
-    this.scoreText = this.add.text(120, 170, t("score", { value: this.score }), {
-      fontFamily: 'MelodicaRegular',
-      fontSize: "40px",
-      fill: "#fff",
-    }).setOrigin(0, 0.5); // Align to the top-left corner
 
     this.buyText = this.add.text(960, 200, t("bought"), {
       fontSize: "40px",
@@ -101,13 +104,14 @@ export default class store extends Phaser.Scene {
     this.keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
     this.keyS = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
     this.keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+    this.keyEnter = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
 
     // Ejemplo de datos (puedes reemplazarlo por tus propios datos)
     const items = [
       { key: "potion", label: t("potion"), price: 50 },
       { key: "potion", label: t("potion"), price: 25 },
       { key: "potion", label: t("potion"), price: 50 },
-      { key: "potion", label: t("potion"), price: 50 },
+      { key: "potion", label: t("potion"), price: 10 },
       { key: "potion", label: t("potion"), price: 10 },
 
       // Agrega más objetos aquí según lo necesites
@@ -127,12 +131,19 @@ export default class store extends Phaser.Scene {
       const item = this.seleccionados[i];
       const x = startX + i * gap;
       const img = this.add.image(x, 640, item.key).setScale(8);
-      const label = this.add.text(x, 800, `${item.label} - ${item.price}`, {
+      const m = this.add.sprite(x - 20, 900, "gold", 0).setScale(2).setOrigin(0.5, 0.5);
+      m.anims.play("gold_anim", true);
+      const label = this.add.text(x, 800, `${item.label}`, {
         fontFamily: 'MelodicaRegular',
         fontSize: "64px",
         fill: "#fff"
       }).setOrigin(0.5, 0.5);
-      this.itemImages.push({ img, label });
+      const price = this.add.text(x + 20, 898, `${item.price}`, {
+        fontFamily: 'MelodicaRegular',
+        fontSize: "40px",
+        fill: "#fff"
+      }).setOrigin(0, 0.5);
+      this.itemImages.push({ img, label, price, m });
     }
     this.selectedIndex = 0;
     this.item = this.seleccionados[this.selectedIndex];
@@ -171,7 +182,7 @@ export default class store extends Phaser.Scene {
   }
   update() {
 
-    if (Phaser.Input.Keyboard.JustDown(this.keyW) || Phaser.Input.Keyboard.JustDown(this.cursors.up)) {
+    if (Phaser.Input.Keyboard.JustDown(this.keyW) || Phaser.Input.Keyboard.JustDown(this.cursors.up) || Phaser.Input.Keyboard.JustDown(this.keyEnter)) {
       if (this.exitActive) {
         this.exitActive = false;
         this.exitText.setVisible(false);
@@ -183,10 +194,19 @@ export default class store extends Phaser.Scene {
         return
       }
       if (this.money >= this.item.price) {
+        audioManager.playSound(0, 0.2, 0);
         this.buySelectedItem();
         this.money -= this.item.price;
-        this.moneyText.setText(t("money", { value: this.money }))
+        this.moneyText.setText(this.money)
+        this.tweens.add({
+          targets: this.moneyImage,
+          scale: 3,
+          duration: 300,
+          yoyo: true,
+          ease: 'Power2',
+        });
       } else {
+        audioManager.playSound(0, 0.2, -1);
         this.buyText.setVisible(false);
         this.cantBuyText.setVisible(true);
 
@@ -294,6 +314,21 @@ export default class store extends Phaser.Scene {
         ease: 'Power2'
       });
 
+      this.tweens.add({
+        targets: obj.m,
+        y: i === this.selectedIndex ? 800 : 900,
+        duration: 200,
+        ease: 'Power2'
+      });
+
+      this.tweens.add({
+        targets: obj.price,
+        y: i === this.selectedIndex ? 798 : 898,
+        duration: 200,
+        ease: 'Power2'
+      });
+
+
     });
   }
 
@@ -320,6 +355,8 @@ export default class store extends Phaser.Scene {
     // Eliminar visualmente el ítem comprado
     this.itemImages[this.selectedIndex].img.destroy();
     this.itemImages[this.selectedIndex].label.destroy();
+    this.itemImages[this.selectedIndex].m.destroy();
+    this.itemImages[this.selectedIndex].price.destroy();
 
     // Eliminar el ítem de los arrays
     this.seleccionados.splice(this.selectedIndex, 1);
@@ -344,7 +381,7 @@ export default class store extends Phaser.Scene {
       tutorialComplete: this.tutorialComplete,
       healthPlayer: this.healthPlayer,
       hiScore: this.hiScore,
-      difficulty: this.difficulty
+      difficultyLevel: this.difficultyLevel
     });
   }
 }

@@ -13,7 +13,7 @@ export default class game extends Phaser.Scene {
     this.soundValue = data.soundValue || 100; // Valor inicial del volumen
     this.tutorialComplete = data.tutorialComplete || false; // Valor para saber si el tutorial se completó
     this.healthPlayer = data.healthPlayer || 100; // Valor inicial de la salud del jugador
-    this.difficulty = data.difficulty || 0; // Dificultad del juego
+    this.difficultyLevel = data.difficultyLevel || 0; // Dificultad del juego
   }
 
   preload() {
@@ -71,6 +71,10 @@ export default class game extends Phaser.Scene {
       frameWidth: 32,
       frameHeight: 32,
     });
+    this.load.spritesheet("gold", "assets/gold.png", {
+      frameWidth: 32,
+      frameHeight: 32,
+    });
   }
 
   async create() {
@@ -79,15 +83,15 @@ export default class game extends Phaser.Scene {
     audioManager.setDurations = [];
     audioManager.transport.position = 0; // Reinicia el transporte de Tone.js
 
-    this.delayBase = Phaser.Math.Between(1000, 1200) / (1 + (this.difficulty * 0.1)); // Base delay between enemy attacks, adjusted by difficulty
+    this.delayBase = Phaser.Math.Between(1500, 2000) / (1 + (this.difficultyLevel * 0.1)); // Base delay between enemy attacks, adjusted by difficulty
     this.delayMult = 1;
     this.delay = this.delayBase / this.delayMult;
-    console.log(`dificultad: ${this.difficulty}, delay: ${this.delay}`);
+    console.log(`dificultad: ${this.difficultyLevel}, delay: ${this.delay}`);
 
     this.enemyDefeatedTriggered = false;
     this.gameOverTriggered = false;
 
-    this.moneyQuantity = Phaser.Math.Between(4, 12) * (1 + this.difficulty); // Cantidad de dinero que se obtiene al derrotar al enemigo, ajustado por dificultad
+    this.moneyQuantity = Math.round(Phaser.Math.Between(4, 12) * (1 + (this.difficultyLevel * 0.2))); // Cantidad de dinero que se obtiene al derrotar al enemigo, ajustado por dificultad
 
     this.scoreMult = 1;
     //crear fondo
@@ -158,6 +162,7 @@ export default class game extends Phaser.Scene {
 
 
 
+
     this.enemy = this.physics.add.sprite(960, 440, "enemy01", 0).setScale(8).setAlpha(0);
 
     this.tweens.add({
@@ -195,13 +200,15 @@ export default class game extends Phaser.Scene {
     this.keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
     this.keyS = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
     this.keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+    this.keyZ = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Z);
 
     this.cooldown = 0
 
     this.attackSequence = [] //1, 1, 1, 1, 1, 2, 3, 4
     this.attackSequenceIndex = 0
 
-    this.attackCooldown = true
+    this.attackCooldown = true;
+    this.attackCooldownBase = true;
 
     // estado del ataque del jugador, que boton presiona
     this.playerAction = 4;
@@ -224,13 +231,16 @@ export default class game extends Phaser.Scene {
       fill: "#fff",
     }).setOrigin(0.5, 0.5); // Align to the top-left corner
 
-    this.moneyText = this.add.text(120, 130, t("money", { value: this.money }), {
+    this.moneyText = this.add.text(180, 138, this.money, {
       fontFamily: 'MelodicaRegular',
       fontSize: "40px",
       fill: "#fff",
     }).setOrigin(0, 0.5); // Align to the top-left corner
 
-    this.scoreText = this.add.text(120, 170, t("score", { value: this.score }), {
+    this.moneyImage = this.physics.add.sprite(140, 140, "gold", 0).setScale(2).setOrigin(0.5, 0.5);
+    this.moneyImage.anims.play("gold_anim", true);
+
+    this.scoreText = this.add.text(120, 190, t("score", { value: this.score }), {
       fontFamily: 'MelodicaRegular',
       fontSize: "40px",
       fill: "#fff",
@@ -262,7 +272,6 @@ export default class game extends Phaser.Scene {
     }).setOrigin(0.5, 0.5).setVisible(false).setAlpha(0); // Center the text
 
     this.stopTimer = false;
-
 
     this.musicOptionsIntro = [
       [null, 'midi/chords.mid', 'midi/base_intro.mid', null]
@@ -296,11 +305,11 @@ export default class game extends Phaser.Scene {
 
     // Determinar cuántos intermedios incluir según la dificultad
     let numIntermedios;
-    if (this.difficulty < 2) {
+    if (this.difficultyLevel < 2) {
       numIntermedios = 1;
     } else {
       // Proporcional: por ejemplo, dificultad 4 => 2 intermedios, dificultad 6 => 3 intermedios, etc.
-      numIntermedios = Math.min(Math.floor(this.difficulty / 2), this.musicOptionsIntermedio.length);
+      numIntermedios = Math.min(Math.floor(this.difficultyLevel / 2), this.musicOptionsIntermedio.length);
       if (numIntermedios < 1) numIntermedios = 1; // Siempre al menos 1
     }
 
@@ -310,11 +319,11 @@ export default class game extends Phaser.Scene {
     }
 
     let numFinales;
-    if (this.difficulty < 6) {
+    if (this.difficultyLevel < 6) {
       numFinales = 1;
     } else {
       // Proporcional: por ejemplo, dificultad 4 => 2 finales, dificultad 6 => 3 finales, etc.
-      numFinales = Math.min(Math.floor(this.difficulty / 3), this.musicOptionsFinal.length);
+      numFinales = Math.min(Math.floor(this.difficultyLevel / 3), this.musicOptionsFinal.length);
       if (numFinales < 1) numFinales = 1; // Siempre al menos 1
     }
 
@@ -334,25 +343,50 @@ export default class game extends Phaser.Scene {
     ];
 
     // Solo agrega el final si la dificultad es mayor a 4
-    if (this.difficulty > 4) {
+    if (this.difficultyLevel > 4) {
       midiQueue.push(...finales);
     }
 
     midiQueue.push(randomOutro);
 
+    this.attackCounter = 0;
+    this.attackBefore = Number;
+    this.baseCounter = 0;
+
     // Callback para cada nota que se ejecuta sin importar qué set esté sonando
     const noteCallback = (midiIndex, note, bpm) => {
       this.createNoteImageForMidi(midiIndex, note);
-      if (midiIndex === 2) {
-        if (Math.random() < 0.8) {     // 80% de probabilidad de fallar (solo 20% pasan)
-          return
-        }
-      }
-      if (this.attackCooldown) {
-        this.enemyAttack(midiIndex, note);
-      }
-    };
 
+      if (this.attackCooldown) {
+        if (midiIndex === 2) {
+          if (this.baseCounter > 6) {
+            this.attackCooldownBase = true;
+            this.baseCounter = 0;
+          }
+          if (!this.attackCooldownBase) {
+            this.baseCounter += 1;
+            return
+          }
+          this.attackCooldownBase = false;
+        }
+        if (midiIndex === this.attackBefore) {
+          this.attackCounter += 1;
+          if (this.attackCounter > 5) {
+            this.attackCounter = 0;
+          } else if (this.attackCounter > 3) {
+            return
+          }
+        } else if (midiIndex != 2) {
+          this.attackCounter = 0;
+        }
+        console.log(this.attackCounter);
+        this.enemyAttack(midiIndex, note);
+        if (midiIndex != 2) {
+          this.attackBefore = midiIndex;
+        }
+
+      }
+    }
     // Genera callbacks para cada set
     const callbacksQueue = midiQueue.map(set => set.map(() => noteCallback));
 
@@ -371,6 +405,9 @@ export default class game extends Phaser.Scene {
   }
   update() {
 
+    if (Phaser.Input.Keyboard.JustDown(this.keyZ)) {
+      this.enemyDefeated()
+    }
     //Detectar teclas
     // W
     if (Phaser.Input.Keyboard.JustDown(this.keyW) || (Phaser.Input.Keyboard.JustDown(this.cursors.up))) {
@@ -779,7 +816,7 @@ export default class game extends Phaser.Scene {
     if (this.score > this.hiScore) {
       this.hiScore = this.score; // Update hiScore if current score is higher
     }
-    this.time.delayedCall(3000, () => {
+    this.time.delayedCall(6000, () => {
       this.scene.start("menu", {
         soundValue: this.soundValue,
         tutorialComplete: this.tutorialComplete,
@@ -806,7 +843,15 @@ export default class game extends Phaser.Scene {
       });
     })
     this.money += this.moneyQuantity; // Incrementa el dinero del jugador
-    this.difficulty += 1; // Incrementa la dificultad del juego
+    this.moneyText.setText(this.money)
+    this.tweens.add({
+      targets: this.moneyImage,
+      scale: 3,
+      duration: 300,
+      yoyo: true,
+      ease: 'Power2',
+    });
+    this.difficultyLevel += 1; // Incrementa la dificultad del juego
 
     this.enemyDefeatedText.setVisible(true);
     this.enemyDefeatedSubText.setVisible(true);
@@ -826,7 +871,7 @@ export default class game extends Phaser.Scene {
         tutorialComplete: this.tutorialComplete,
         healthPlayer: this.healthPlayer,
         hiScore: this.hiScore,
-        difficulty: this.difficulty
+        difficultyLevel: this.difficultyLevel
       })
     });
   }

@@ -259,6 +259,20 @@ class AudioManager {
       }
     });
   }
+
+  playSound(index = 0, duration = 0.5, tone = 1) {
+    // MIDI de C4 = 60, A4 = 69
+    const minMidi = 60 + (12 * tone);
+    const maxMidi = 72 + (12 * tone);
+    const randomMidi = Math.floor(Math.random() * (maxMidi - minMidi + 1)) + minMidi;
+    const randomNote = Tone.Frequency(randomMidi, "midi").toNote();
+
+    if (this.instruments[index] && this.instruments[index].triggerAttackRelease) {
+      this.instruments[index].triggerAttackRelease(randomNote, duration);
+      console.log(`Reproduciendo nota aleatoria entre C4 y A4: ${randomNote}`);
+    }
+  }
+
 }
 
 const audioManager = new AudioManager();

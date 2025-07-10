@@ -8,6 +8,7 @@ export default class tutorial extends Phaser.Scene {
     init(data) {
         this.hiScore = data.hiScore || 0; // Valor inicial del puntaje más alto
         this.soundValue = data.soundValue || 100; // Valor inicial del volumen
+        this.difficultyLevel = data.difficultyLevel || 0; // Dificultad del juego
     }
 
     preload() {
@@ -66,53 +67,15 @@ export default class tutorial extends Phaser.Scene {
             frameWidth: 32,
             frameHeight: 32,
         });
+        this.load.spritesheet("gold", "assets/gold.png", {
+            frameWidth: 32,
+            frameHeight: 32,
+        });
     }
 
     async create() {
         //crear fondo
         this.add.image(960, 540, "background_tutorial").setScale(8).setOrigin(0.5, 0.5);
-
-        let locationTR = 1850
-        let locationTL = 70
-        this.delay = 1000; // Tiempo en milisegundos para el tween
-        this.attack = this.physics.add.group(); //grupo de los indicadores de ataque
-
-        this.attackSequenceExecuted = false;
-        this.healthbarSequenceExecuted = false;
-        this.timeBarSequenceExecuted = false;
-
-
-        this.indicatorUp = this.add.image(960, 160, "indicator").setOrigin(0.5, 0.5).setScale(12).setAngle(270).setVisible(false).setAlpha(0); // W 380  W160 A580 S920 D1340
-        this.indicatorLeft = this.add.image(580, 540, "indicator").setOrigin(0.5, 0.5).setScale(12).setAngle(180).setVisible(false).setAlpha(0); // A
-        this.indicatorDown = this.add.image(960, 920, "indicator").setOrigin(0.5, 0.5).setScale(12).setAngle(90).setVisible(false).setAlpha(0); // S
-        this.indicatorRight = this.add.image(1340, 540, "indicator").setOrigin(0.5, 0.5).setScale(12).setAngle(0).setVisible(false).setAlpha(0); // D
-
-        this.hpbarLeft = this.add.sprite(locationTL, 75, "hpbar_left", 0).setOrigin(0, 0.5).setScale(6).setVisible(false).setAlpha(0);
-        this.hpbarMiddle = this.add.sprite(locationTL + 192, 75, "hpbar_middle", 0).setOrigin(0, 0.5).setScale(6).setVisible(false).setAlpha(0);
-        this.hpbarRight = this.add.sprite(locationTL + 384, 75, "hpbar_right", 0).setOrigin(0, 0.5).setScale(6).setVisible(false).setAlpha(0);
-
-        this.battlebarLeft = this.add.sprite(locationTR - 384, 80, "battlebar_left", 0).setOrigin(1, 0.5).setScale(6).setVisible(false).setAlpha(0);
-        this.battlebarMiddle = this.add.sprite(locationTR - 192, 80, "battlebar_middle", 0).setOrigin(1, 0.5).setScale(6).setVisible(false).setAlpha(0);
-        this.battlebarRight = this.add.sprite(locationTR, 80, "battlebar_right", 0).setOrigin(1, 0.5).setScale(6).setVisible(false).setAlpha(0); //192 en scale 6
-
-
-        this.healthPlayerText = this.add.text(340, 74, t("health", { value: 100 }), {
-            fontFamily: 'MelodicaRegular',
-            fontSize: "40px",
-            fill: "#fff",
-        }).setOrigin(0.5, 0.5).setVisible(false).setAlpha(0); // Align to the top-left corner
-
-        this.moneyText = this.add.text(120, 130, t("money", { value: 0 }), {
-            fontFamily: 'MelodicaRegular',
-            fontSize: "40px",
-            fill: "#fff",
-        }).setOrigin(0, 0.5).setVisible(false).setAlpha(0); // Align to the top-left corner
-
-        this.scoreText = this.add.text(120, 170, t("score", { value: 0 }), {
-            fontFamily: 'MelodicaRegular',
-            fontSize: "40px",
-            fill: "#fff",
-        }).setOrigin(0, 0.5).setVisible(false).setAlpha(0); // Align to the top-left corner
 
 
         this.anims.create({
@@ -135,10 +98,10 @@ export default class tutorial extends Phaser.Scene {
         this.anims.create({
             key: "buttons_down",
             frames: [
-                { key: "buttons", frame: 0 },
-                { key: "buttons", frame: 3 }
+                { key: "buttons", frame: 0, duration: 500 },
+                { key: "buttons", frame: 3, duration: 3000 } // 500 ms de pausa en el último frame
             ],
-            frameRate: 2,
+            frameRate: 10,
             repeat: -1,
         });
 
@@ -152,10 +115,96 @@ export default class tutorial extends Phaser.Scene {
             repeat: -1,
         });
 
+        this.anims.create({
+            key: "gold_anim",
+            frames: [
+                ...this.anims.generateFrameNumbers("gold", { start: 0, end: 11 }),
+                { key: "gold", frame: 0, duration: 2000 } // 500 ms de pausa en el último frame
+            ],
+            frameRate: 10,
+            repeat: -1,
+        });
 
 
+        let locationTR = 1850
+        let locationTL = 70
+        this.delay = 1000; // Tiempo en milisegundos para el tween
+        this.attack = this.physics.add.group(); //grupo de los indicadores de ataque
 
-        this.buttons = this.add.sprite(1850, 1000, "buttons", 0).setScale(4).setOrigin(0.5, 0.5);
+        this.attackSequenceExecuted = false;
+        this.healthbarSequenceExecuted = false;
+        this.timeBarSequenceExecuted = false;
+        this.moneySequenceExecuted = false;
+        this.scoreSequenceExecuted = false;
+
+
+        this.indicatorUp = this.add.image(960, 160, "indicator").setOrigin(0.5, 0.5).setScale(12).setAngle(270).setVisible(false).setAlpha(0); // W 380  W160 A580 S920 D1340
+        this.indicatorLeft = this.add.image(580, 540, "indicator").setOrigin(0.5, 0.5).setScale(12).setAngle(180).setVisible(false).setAlpha(0); // A
+        this.indicatorDown = this.add.image(960, 920, "indicator").setOrigin(0.5, 0.5).setScale(12).setAngle(90).setVisible(false).setAlpha(0); // S
+        this.indicatorRight = this.add.image(1340, 540, "indicator").setOrigin(0.5, 0.5).setScale(12).setAngle(0).setVisible(false).setAlpha(0); // D
+
+        this.hpbarLeft = this.add.sprite(locationTL, 75, "hpbar_left", 0).setOrigin(0, 0.5).setScale(6).setVisible(false).setAlpha(0);
+        this.hpbarMiddle = this.add.sprite(locationTL + 192, 75, "hpbar_middle", 0).setOrigin(0, 0.5).setScale(6).setVisible(false).setAlpha(0);
+        this.hpbarRight = this.add.sprite(locationTL + 384, 75, "hpbar_right", 0).setOrigin(0, 0.5).setScale(6).setVisible(false).setAlpha(0);
+
+        this.battlebarLeft = this.add.sprite(locationTR - 384, 80, "battlebar_left", 0).setOrigin(1, 0.5).setScale(6).setVisible(false).setAlpha(0);
+        this.battlebarMiddle = this.add.sprite(locationTR - 192, 80, "battlebar_middle", 0).setOrigin(1, 0.5).setScale(6).setVisible(false).setAlpha(0);
+        this.battlebarRight = this.add.sprite(locationTR, 80, "battlebar_right", 0).setOrigin(1, 0.5).setScale(6).setVisible(false).setAlpha(0); //192 en scale 6
+
+        this.money = 0;
+        this.score = 0
+
+        this.healthPlayerText = this.add.text(340, 74, t("health", { value: 100 }), {
+            fontFamily: 'MelodicaRegular',
+            fontSize: "40px",
+            fill: "#fff",
+        }).setOrigin(0.5, 0.5).setVisible(false).setAlpha(0); // Align to the top-left corner
+
+        this.moneyText = this.add.text(180, 138, this.money, {
+            fontFamily: 'MelodicaRegular',
+            fontSize: "40px",
+            fill: "#fff",
+        }).setOrigin(0, 0.5).setVisible(false).setAlpha(0); // Align to the top-left corner
+
+        this.moneyImage = this.add.sprite(140, 140, "gold", 0).setScale(2).setOrigin(0.5, 0.5).setVisible(false).setAlpha(0);
+        this.moneyImage.anims.play("gold_anim", true);
+
+        this.scoreText = this.add.text(120, 190, t("score", { value: this.score }), {
+            fontFamily: 'MelodicaRegular',
+            fontSize: "40px",
+            fill: "#fff",
+        }).setOrigin(0, 0.5).setVisible(false).setAlpha(0); // Align to the top-left corner
+
+
+        this.controls = this.add.sprite(1720, 930, "buttons", 0).setScale(4).setOrigin(0.5, 0.5).setAlpha(0);
+
+        this.skipText = this.add.text(1720, 1010, t("skip"), {
+            fontFamily: 'MelodicaRegular',
+            fontSize: "32px",
+            fill: "#fff",
+            align: "center"
+        }).setOrigin(0.5, 0.5).setAlpha(0);
+
+        this.continueText = this.add.text(1780, 930, t("continue"), {
+            fontFamily: 'MelodicaRegular',
+            fontSize: "32px",
+            fill: "#fff"
+        }).setOrigin(0, 0.5).setAlpha(0);
+
+        this.beforeText = this.add.text(1660, 930, t("before"), {
+            fontFamily: 'MelodicaRegular',
+            fontSize: "32px",
+            fill: "#fff"
+        }).setOrigin(1, 0.5).setAlpha(0);
+
+        this.tweens.add({
+            targets: [this.controls, this.skipText, this.continueText, this.beforeText],
+            alpha: 1,
+            duration: 1000,
+            ease: 'Power2',
+        });
+
+        this.buttons = this.add.sprite(1850, 1000, "buttons", 0).setScale(4).setOrigin(0.5, 0.5).setVisible(false).setAlpha(0);
         this.buttons2 = this.add.sprite(960, 540, "buttons", 0).setScale(4).setOrigin(0.5, 0.5).setVisible(false).setAlpha(0);
         this.buttons.anims.play("buttons_right", true);
         //declarar flechas
@@ -169,6 +218,8 @@ export default class tutorial extends Phaser.Scene {
         this.tutorialComplete = true;
 
         this.tutorialStage = 0
+
+
 
         this.textContent = [
             t("tutorial2"),
@@ -209,80 +260,97 @@ export default class tutorial extends Phaser.Scene {
         this.buttons.x = textBounds.right + this.padding;
         this.buttons.y = textBounds.centerY;
 
+        this.sHoldStart = null; // Variable para guardar el tiempo de inicio
+        this.sHoldThreshold = 3000; // Tiempo requerido en ms (ejemplo: 1 segundo)
+
+        this.textHistory = [t("tutorial1"), ...this.textContent];
+        this.textIndex = 0;
+
     }
-    update() {
-        if (Phaser.Input.Keyboard.JustDown(this.keyW) || Phaser.Input.Keyboard.JustDown(this.cursors.up)) {
+    update(time, delta) {
+
+        if (this.keyS.isDown || this.cursors.down.isDown) {
+            if (this.sHoldStart === null) {
+                this.sHoldStart = time; // Guarda el tiempo de inicio
+            } else if (time - this.sHoldStart >= this.sHoldThreshold) {
+                // Acción cuando se mantiene presionada S por el tiempo requerido
+                this.startGame();
+                // Tu lógica aquí (solo una vez)
+                this.sHoldStart = -Infinity; // Para que no se repita hasta soltar y volver a presionar
+            }
+        } else {
+            // Si se suelta la tecla, reinicia el tiempo de inicio
+            this.sHoldStart = null;
         }
+
         if (Phaser.Input.Keyboard.JustDown(this.keyA) || Phaser.Input.Keyboard.JustDown(this.cursors.left)) {
-
+            this.previousText();
         }
-        if (Phaser.Input.Keyboard.JustDown(this.keyS) || Phaser.Input.Keyboard.JustDown(this.cursors.down)) {
 
-        }
         if (Phaser.Input.Keyboard.JustDown(this.keyD) || Phaser.Input.Keyboard.JustDown(this.cursors.right)) {
             this.nextText();
         }
-        if (this.tutorialStage === 4) {
+
+        if (this.textIndex === 4) {
             this.attackSequence();
         }
 
-        if (this.tutorialStage === 5) {
+        if (this.textIndex === 5) {
             this.healthbarSequence();
         }
 
-        if (this.tutorialStage === 6) {
+        if (this.textIndex === 6) {
             this.timebarSequence();
 
         }
-        if (this.tutorialStage === 7) {
-            this.moneyText.setVisible(true);
-            this.tweens.add({
-                targets: this.moneyText, // varios objetos 
-                alpha: 1,
-                duration: 1000,
-                ease: 'Power2',
-            });
-
+        if (this.textIndex === 7) {
+            this.moneySequence();
         }
-        if (this.tutorialStage === 9) {
-            this.scoreText.setVisible(true);
-            this.tweens.add({
-                targets: this.scoreText, // varios objetos 
-                alpha: 1,
-                duration: 1000,
-                ease: 'Power2',
-            });
+        if (this.textIndex === 9) {
+            this.scoreSequence();
         }
     }
     nextText() {
-        const next = this.textContent.shift();
+        if (this.textIndex < this.textHistory.length - 1) {
+            this.textIndex++;
+            const next = this.textHistory[this.textIndex];
+            audioManager.playSound(0, 0.2, -1);
 
-
-        if (next !== undefined) {
             this.textBox.setText(next);
-            this.textBox.setAlpha(0); // Reiniciar la opacidad antes de la animación
+            this.textBox.setAlpha(0);
             this.tweens.add({
                 targets: this.textBox,
                 alpha: 1,
                 duration: 1000,
                 ease: 'Power2',
             });
-            // Después de crear this.textBox
             const textBounds = this.textBox.getBounds();
-            // Coloca el botón justo a la derecha del texto, centrado verticalmente
             this.buttons.x = textBounds.right + this.padding;
             this.buttons.y = textBounds.centerY;
-            this.tutorialStage += 1
-        } else {
-            // Aquí se acabaron los textos, haz lo que quieras:
-            // Por ejemplo, pasar a la siguiente escena:
-            this.scene.start("game", {
-                soundValue: this.soundValue,
-                tutorialComplete: this.tutorialComplete,
-                hiScore: this.hiScore
-            });
 
-            // O mostrar un mensaje, botón, etc.
+        } else {
+            this.startGame();
+        }
+    }
+
+    // Nueva función previousText
+    previousText() {
+        if (this.textIndex > 0) {
+            this.textIndex--;
+            const prev = this.textHistory[this.textIndex];
+            audioManager.playSound(0, 0.2, -2);
+
+            this.textBox.setText(prev);
+            this.textBox.setAlpha(0);
+            this.tweens.add({
+                targets: this.textBox,
+                alpha: 1,
+                duration: 1000,
+                ease: 'Power2',
+            });
+            const textBounds = this.textBox.getBounds();
+            this.buttons.x = textBounds.right + this.padding;
+            this.buttons.y = textBounds.centerY;
         }
     }
     attackSequence() {
@@ -450,6 +518,56 @@ export default class tutorial extends Phaser.Scene {
                     }
                 });
             }
+        });
+    }
+
+    moneySequence() {
+        if (this.moneySequenceExecuted) {
+            return
+        }
+        this.moneySequenceExecuted = true;
+        this.moneyText.setVisible(true);
+        this.moneyImage.setVisible(true);
+        this.tweens.add({
+            targets: [this.moneyText, this.moneyImage], // varios objetos 
+            alpha: 1,
+            duration: 1000,
+            ease: 'Power2',
+        });
+        this.time.delayedCall(2000, () => {
+            this.money = 10; // Incrementa el dinero del jugador
+            this.moneyText.setText(this.money)
+            this.tweens.add({
+                targets: this.moneyImage,
+                scale: 3,
+                duration: 300,
+                yoyo: true,
+                ease: 'Power2',
+            });
+        });
+
+    }
+
+    scoreSequence() {
+        if (this.scoreSequenceExecuted) {
+            return
+        }
+        this.scoreSequenceExecuted = true;
+        this.scoreText.setVisible(true);
+        this.tweens.add({
+            targets: this.scoreText, // varios objetos 
+            alpha: 1,
+            duration: 1000,
+            ease: 'Power2',
+        });
+    }
+
+    startGame() {
+        this.scene.start("game", {
+            soundValue: this.soundValue,
+            tutorialComplete: this.tutorialComplete,
+            hiScore: this.hiScore,
+            difficultyLevel: this.difficultyLevel
         });
     }
 }
