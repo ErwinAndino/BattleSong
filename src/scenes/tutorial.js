@@ -71,6 +71,10 @@ export default class tutorial extends Phaser.Scene {
             frameWidth: 32,
             frameHeight: 32,
         });
+        this.load.spritesheet("enemy_king_idle", "assets/king_idle.png", {
+            frameWidth: 32,
+            frameHeight: 32,
+        });
     }
 
     async create() {
@@ -120,6 +124,23 @@ export default class tutorial extends Phaser.Scene {
             frames: [
                 ...this.anims.generateFrameNumbers("gold", { start: 0, end: 11 }),
                 { key: "gold", frame: 0, duration: 2000 } // 500 ms de pausa en el último frame
+            ],
+            frameRate: 10,
+            repeat: -1,
+        });
+
+        this.anims.create({
+            key: "king_idle",
+            frames: [
+                { key: "enemy_king_idle", frame: 1 },
+                { key: "enemy_king_idle", frame: 2 },
+                { key: "enemy_king_idle", frame: 1, duration: 2000 },
+                { key: "enemy_king_idle", frame: 2 },
+                { key: "enemy_king_idle", frame: 1, duration: 2000 },
+                { key: "enemy_king_idle", frame: 2 },
+                { key: "enemy_king_idle", frame: 1, duration: 4000 },
+                ...this.anims.generateFrameNumbers("enemy_king_idle", { start: 3, end: 8 }),
+                { key: "enemy_king_idle", frame: 1, duration: 2000 }, // 500 ms de pausa en el último frame
             ],
             frameRate: 10,
             repeat: -1,
@@ -205,7 +226,6 @@ export default class tutorial extends Phaser.Scene {
         });
 
         this.buttons = this.add.sprite(1850, 1000, "buttons", 0).setScale(4).setOrigin(0.5, 0.5).setVisible(false).setAlpha(0);
-        this.buttons2 = this.add.sprite(960, 540, "buttons", 0).setScale(4).setOrigin(0.5, 0.5).setVisible(false).setAlpha(0);
         this.buttons.anims.play("buttons_right", true);
         //declarar flechas
         this.cursors = this.input.keyboard.createCursorKeys();
@@ -214,11 +234,14 @@ export default class tutorial extends Phaser.Scene {
         this.keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
         this.keyS = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
         this.keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+        this.keyZ = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Z);
 
         this.tutorialComplete = true;
 
         this.tutorialStage = 0
 
+        this.king = this.add.sprite(960, 540, "enemy_king_idle", 1).setScale(12).setOrigin(0.5, 0.5)
+        this.king.anims.play("king_idle", true);
 
 
         this.textContent = [
@@ -268,6 +291,10 @@ export default class tutorial extends Phaser.Scene {
 
     }
     update(time, delta) {
+
+        if (Phaser.Input.Keyboard.JustDown(this.keyZ)) {
+            this.startGame()
+        }
 
         if (this.keyS.isDown || this.cursors.down.isDown) {
             if (this.sHoldStart === null) {
@@ -363,29 +390,19 @@ export default class tutorial extends Phaser.Scene {
         this.indicatorLeft.setVisible(true);
         this.indicatorDown.setVisible(true);
         this.indicatorRight.setVisible(true);
-        this.buttons2.setVisible(true);
 
         this.tweens.add({
-            targets: [this.indicatorUp, this.indicatorLeft, this.indicatorDown, this.indicatorRight, this.buttons2], // varios objetos 
+            targets: [this.indicatorUp, this.indicatorLeft, this.indicatorDown, this.indicatorRight], // varios objetos 
             alpha: 1,
             duration: 1000,
             ease: 'Power2',
         });
 
-        this.enemyAttack(3)
-
-        this.time.delayedCall(2000, () => {
-            this.enemyAttack(1)
-        });
-        this.time.delayedCall(4000, () => {
-            this.enemyAttack(0)
-        });
-        this.time.delayedCall(6000, () => {
-            this.enemyAttack(2)
-        });
-        this.time.delayedCall(8000, () => {
-            this.buttons2.setVisible(false);
-        });
+        for (let i = 0; i < 12; i++) {
+            this.time.delayedCall(2000 * i, () => {
+                this.enemyAttack(i % 4)
+            });
+        }
     }
     healthbarSequence() {
         if (this.healthbarSequenceExecuted) {
@@ -429,19 +446,19 @@ export default class tutorial extends Phaser.Scene {
         let indicator;
         if (attackType === 0) { // W 160 A 580 S 920 D 1340
             indicator = this.attack.create(960, 384, "indicator_attack").setScale(10).setAlpha(0.1).setTint(0xFFC300).setVisible(true).setAngle(270).setDepth(1); //W up
-            this.buttons2.anims.play("buttons_up", true);
+
         }
         if (attackType === 1) {
             indicator = this.attack.create(804, 540, "indicator_attack").setScale(10).setAlpha(0.1).setTint(0x0046ff).setVisible(true).setAngle(180).setDepth(1); //A left
-            this.buttons2.anims.play("buttons_left", true);
+
         }
         if (attackType === 2) {
             indicator = this.attack.create(960, 696, "indicator_attack").setScale(10).setAlpha(0.1).setTint(0x51ff00).setVisible(true).setAngle(90).setDepth(1); //S down
-            this.buttons2.anims.play("buttons_down", true);
+
         }
         if (attackType === 3) {
             indicator = this.attack.create(1116, 540, "indicator_attack").setScale(10).setAlpha(0.1).setTint(0xff2a00).setVisible(true).setAngle(0).setDepth(1); //D right
-            this.buttons2.anims.play("buttons_right", true);
+
         }
         if (attackType > 3) {
             return; // No attack if the random number is greater than 4

@@ -195,9 +195,18 @@ export default class store extends Phaser.Scene {
       }
       if (this.money >= this.item.price) {
         audioManager.playSound(0, 0.2, 0);
-        this.buySelectedItem();
-        this.money -= this.item.price;
-        this.moneyText.setText(this.money)
+        this.money -= this.item.price; // Descuenta aquí, antes de comprar
+        this.moneyText.setText(this.money);
+        this.tweens.add({
+          targets: this.itemImages[this.selectedIndex].img,
+          scale: 12,
+          duration: 300,
+          yoyo: true,
+          ease: 'Power2',
+        });
+        this.time.delayedCall(600, () => {
+          this.buySelectedItem();
+        });
         this.tweens.add({
           targets: this.moneyImage,
           scale: 3,
@@ -369,6 +378,7 @@ export default class store extends Phaser.Scene {
 
     // Actualizar la selección visual si quedan ítems
     if (this.itemImages.length > 0) {
+      this.item = this.seleccionados[this.selectedIndex];
       this.highlightSelection();
     }
   }
