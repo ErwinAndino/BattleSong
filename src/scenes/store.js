@@ -39,7 +39,7 @@ export default class store extends Phaser.Scene {
       fill: "#fff"
     }).setOrigin(0.5, 0.5);
 
-    this.controls = this.add.image(1820, 100, "buttons", 0).setScale(4).setOrigin(0.5, 0.5);
+    this.controls = this.add.image(1820, 100, "buttons", 0).setScale(4).setOrigin(0.5, 0.5).setInteractive();
 
 
     this.add.text(1820, 20, t("buy"), {
@@ -78,7 +78,10 @@ export default class store extends Phaser.Scene {
     this.moneyImage = this.physics.add.sprite(140, 140, "gold", 0).setScale(2).setOrigin(0.5, 0.5);
     this.moneyImage.anims.play("gold_anim", true);
 
-    this.scoreText = this.add.text(120, 190, t("score", { value: this.score }), {
+    this.scoreImage = this.add.sprite(140, 190, "score", 0).setScale(2).setOrigin(0.5, 0.5);
+    this.scoreImage.anims.play("score_anim", true);
+
+    this.scoreText = this.add.text(180, 188, this.score, {
       fontFamily: 'MelodicaRegular',
       fontSize: "40px",
       fill: "#fff",
@@ -130,7 +133,7 @@ export default class store extends Phaser.Scene {
     for (let i = 0; i < this.seleccionados.length; i++) {
       const item = this.seleccionados[i];
       const x = startX + i * gap;
-      const img = this.add.image(x, 640, item.key).setScale(8);
+      const img = this.add.image(x, 640, item.key).setScale(8).setInteractive();
       const m = this.add.sprite(x - 20, 900, "gold", 0).setScale(2).setOrigin(0.5, 0.5);
       m.anims.play("gold_anim", true);
       const label = this.add.text(x, 800, `${item.label}`, {
@@ -143,6 +146,41 @@ export default class store extends Phaser.Scene {
         fontSize: "40px",
         fill: "#fff"
       }).setOrigin(0, 0.5);
+
+      img.on("pointerover", () => {
+        this.selectedIndex = i; // Cambia el ítem seleccionado
+        this.highlightSelection(); // Aplica el efecto visual
+      });
+
+      img.on("pointerout", () => {
+        this.selectedIndex = -1;
+        this.highlightSelection();
+      });
+
+      img.on("pointerdown", () => {
+        if (this.money >= item.price) {
+          audioManager.playSound(0, 0.2, 1);
+          this.money -= item.price; // Descuenta aquí, antes de comprar
+          this.moneyText.setText(this.money);
+          this.buySelectedItem();
+          this.tweens.add({
+            targets: this.moneyImage,
+            scale: 3,
+            duration: 300,
+            yoyo: true,
+            ease: 'Power2',
+          });
+        } else {
+          audioManager.playSound(0, 0.2, -1);
+          this.buyText.setVisible(false);
+          this.cantBuyText.setVisible(true);
+
+          this.time.delayedCall(3000, () => {
+            this.cantBuyText.setVisible(false);
+          });
+        }
+      });
+
       this.itemImages.push({ img, label, price, m });
     }
     this.selectedIndex = 0;
@@ -179,6 +217,10 @@ export default class store extends Phaser.Scene {
       fill: "#fff"
     }).setOrigin(0.5, 0.5).setVisible(false);
 
+    this.controls.on('pointerdown', () => {
+      this.exit();
+    });
+
   }
   update() {
 
@@ -194,19 +236,10 @@ export default class store extends Phaser.Scene {
         return
       }
       if (this.money >= this.item.price) {
-        audioManager.playSound(0, 0.2, 0);
+        audioManager.playSound(0, 0.2, 1);
         this.money -= this.item.price; // Descuenta aquí, antes de comprar
         this.moneyText.setText(this.money);
-        this.tweens.add({
-          targets: this.itemImages[this.selectedIndex].img,
-          scale: 12,
-          duration: 300,
-          yoyo: true,
-          ease: 'Power2',
-        });
-        this.time.delayedCall(600, () => {
-          this.buySelectedItem();
-        });
+        this.buySelectedItem();
         this.tweens.add({
           targets: this.moneyImage,
           scale: 3,
@@ -301,8 +334,6 @@ export default class store extends Phaser.Scene {
     this.itemImages.forEach((obj, i) => {
       obj.label.setStyle({ fontStyle: i === this.selectedIndex ? 'bold' : 'normal' });
       obj.label.setColor(i === this.selectedIndex ? "#ffd700" : "#fff"); // Amarillo si seleccionado, blanco si no
-
-
 
       // Calcula la posición Y objetivo
       const targetY = i === this.selectedIndex ? 540 : 640; // Arriba si seleccionado, abajo si no

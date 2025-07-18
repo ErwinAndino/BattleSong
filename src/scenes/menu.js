@@ -21,35 +21,39 @@ export default class menu extends Phaser.Scene {
         this.load.image("indicator", "assets/indicator.png");
         this.load.image("indicator_attack", "assets/indicator_attack.png");
         this.load.json('translations', 'assets/lang.json');
+        this.load.image("arrows", "assets/arrows.png");
+
     }
 
     async create() {
         await document.fonts.ready;
         await loadTranslations(this); // ya no es async
-        this.input.keyboard.once('keydown', async () => {
+
+        let started = false;
+
+        const startMenu = async () => {
+            if (started) return;
+            started = true;
+
             await audioManager.start();
-            this.setVolumen(this.soundValue); // <-- Aplica el volumen aquí, después de cargar instrumentos
-            this.selector = 3;
+            this.setVolumen(this.soundValue);
+
+            this.selector = 2;
             this.start.setVisible(true);
+            this.start.setInteractive();
             this.difficulty.setVisible(true);
+            this.difficulty.setInteractive();
             this.settings.setVisible(true);
+            this.settings.setInteractive();
             this.hiScoreText.setVisible(true);
             this.pressButton.setVisible(false);
-        });
+        };
 
+        // Escucha una sola vez por teclado
+        this.input.keyboard.once('keydown', startMenu);
 
-
-        //declarar flechas
-        this.cursors = this.input.keyboard.createCursorKeys();
-        //declarar teclas WASD
-        this.keyW = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
-        this.keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
-        this.keyS = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
-        this.keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
-        this.keyEnter = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
-
-
-
+        // Escucha una sola vez por pantalla táctil o clic
+        this.input.once('pointerdown', startMenu);
 
         //crear fondo
         this.add.image(960, 540, "background_menu").setScale(8).setOrigin(0.5, 0.5);
@@ -67,27 +71,32 @@ export default class menu extends Phaser.Scene {
         this.start = this.add.text(960, 500, "...", {
             fontFamily: 'MelodicaRegular',
             fontSize: "128px",
-        }).setOrigin(0.5, 0.5).setColor("#ffffff").setVisible(false);
+        }).setOrigin(0.5, 0.5).setColor("#ffffff").setVisible(false).disableInteractive();
 
         this.difficulty = this.add.text(960, 700, "...", {
             fontFamily: 'MelodicaRegular',
             fontSize: "128px",
-        }).setOrigin(0.5, 0.5).setColor("#ffffff").setVisible(false);
+        }).setOrigin(0.5, 0.5).setColor("#ffffff").setVisible(false).disableInteractive();
 
         this.difficultyControl = this.add.text(960, 700, "facil", {
             fontFamily: 'MelodicaRegular',
             fontSize: "128px",
-        }).setOrigin(0.5, 0.5).setColor("#ffd700").setVisible(false).setAlpha(0);
+        }).setOrigin(0.5, 0.5).setColor("#ffd700").setVisible(false).setAlpha(0).disableInteractive();
 
         this.settings = this.add.text(960, 900, "...", {
             fontFamily: 'MelodicaRegular',
             fontSize: "128px",
-        }).setOrigin(0.5, 0.5).setColor("#ffffff").setVisible(false);
+        }).setOrigin(0.5, 0.5).setColor("#ffffff").setVisible(false).disableInteractive();
 
         this.hiScoreText = this.add.text(20, 1000, "...", {
             fontFamily: 'MelodicaRegular',
             fontSize: "60px",
         }).setOrigin(0, 0.5).setColor("#ffffff").setVisible(false);
+
+        this.copyrightText = this.add.text(1900, 1000, "© 2025 Erwin Andino", {
+            fontFamily: 'MelodicaRegular',
+            fontSize: "60px",
+        }).setOrigin(1, 0.5).setColor("#ffffff").setVisible(true);
 
         // Crea un gráfico en la escena
         this.overlay = this.add.graphics();
@@ -102,35 +111,147 @@ export default class menu extends Phaser.Scene {
         this.sound = this.add.text(960, 300, "...", {
             fontFamily: 'MelodicaRegular',
             fontSize: "128px",
-        }).setOrigin(0.5, 0.5).setColor("#ffffff").setVisible(false);
+        }).setOrigin(0.5, 0.5).setColor("#ffffff").setVisible(false).disableInteractive();
 
         this.soundControl = this.add.text(960, 300, this.soundValue, {
             fontFamily: 'MelodicaRegular',
             fontSize: "128px",
-        }).setOrigin(0.5, 0.5).setColor("#ffd700").setVisible(false).setAlpha(0);
+        }).setOrigin(0.5, 0.5).setColor("#ffd700").setVisible(false).setAlpha(0).disableInteractive();
 
         this.language = this.add.text(960, 500, "...", {
             fontFamily: 'MelodicaRegular',
             fontSize: "128px",
-        }).setOrigin(0.5, 0.5).setColor("#ffffff").setVisible(false);
+        }).setOrigin(0.5, 0.5).setColor("#ffffff").setVisible(false).disableInteractive();
 
         this.languageControl = this.add.text(960, 500, "...", {
             fontFamily: 'MelodicaRegular',
             fontSize: "128px",
-        }).setOrigin(0.5, 0.5).setColor("#ffd700").setVisible(false).setAlpha(0);
+        }).setOrigin(0.5, 0.5).setColor("#ffd700").setVisible(false).setAlpha(0).disableInteractive();
 
         this.back = this.add.text(960, 700, "...", {
             fontFamily: 'MelodicaRegular',
             fontSize: "128px",
-        }).setOrigin(0.5, 0.5).setColor("#ffffff").setVisible(false);
+        }).setOrigin(0.5, 0.5).setColor("#ffffff").setVisible(false).disableInteractive();
 
         this.ready = true;
-        this.selector = 0;
 
         this.time.delayedCall(100, () => {
             this.updateText();
         });
 
+        //declarar flechas
+        this.cursors = this.input.keyboard.createCursorKeys();
+        //declarar teclas WASD
+        this.keyW = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+        this.keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
+        this.keyS = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
+        this.keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+        this.keyEnter = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
+
+
+        //menu
+        this.start.on('pointerover', () => {
+            this.selector = 3;
+        });
+        this.difficulty.on('pointerover', () => {
+            this.selector = 2;
+        });
+        this.settings.on('pointerover', () => {
+            this.selector = 1;
+        });
+
+        //settings
+        this.sound.on('pointerover', () => {
+            this.selector = 3;
+        });
+        this.language.on('pointerover', () => {
+            this.selector = 2;
+        });
+        this.back.on('pointerover', () => {
+            this.selector = 1;
+        });
+
+        //menu
+        this.start.on('pointerdown', this.startGame, this);
+        this.difficulty.on('pointerdown', function () {
+            if (this.difficultyActive) {
+                this.exitDificultad();
+            } else {
+                this.dificultad();
+            }
+        }, this);
+
+        this.difficultyControl.on('pointerdown', function () {
+            audioManager.playSound(0, 0.2, 1);
+            if (this.difficultyLevel === 0) {
+                this.difficultyLevel = 3;
+                this.difficultyControl.setText(t("medium"))
+            } else if (this.difficultyLevel === 3) {
+                this.difficultyLevel = 5
+                this.difficultyControl.setText(t("hard"))
+            } else if (this.difficultyLevel === 5) {
+                this.difficultyLevel = 0
+                this.difficultyControl.setText(t("easy"))
+            }
+        }, this);
+
+        this.settings.on('pointerdown', function () {
+            this.opciones();
+            if (this.difficultyActive) {
+                this.exitDificultad();
+            }
+        }, this);
+        //settings
+        this.sound.on('pointerdown', function () {
+            if (this.soundActive) {
+                this.exitVolumen();
+            } else {
+                this.volumen();
+                if (this.idiomaActive) {
+                    this.exitIdioma();
+                }
+            }
+        }, this);
+
+        this.soundControl.on('pointerdown', function () {
+            this.soundValue -= 10;
+            if (this.soundValue < 0) {
+                this.soundValue = 100;
+            }
+            this.soundControl.setText(this.soundValue);
+            this.setVolumen(this.soundValue);
+            audioManager.playSound(0, 0.2, 1);
+        }, this);
+
+        this.language.on('pointerdown', function () {
+            if (this.idiomaActive) {
+                this.exitIdioma();
+            } else {
+                this.idioma();
+                if (this.soundActive) {
+                    this.exitVolumen();
+                }
+            }
+        }, this);
+
+        this.languageControl.on('pointerdown', function () {
+            if (getLang() === 'es') {
+                setLang('en');
+            } else {
+                setLang('es');
+            }
+            this.updateText();
+            audioManager.playSound(0, 0.2, 1);
+        }, this);
+        this.back.on('pointerdown', function () {
+            this.exitOpciones();
+            if (this.idiomaActive) {
+                this.exitIdioma();
+            }
+            if (this.soundActive) {
+                this.exitVolumen();
+            }
+        }, this);
     }
     update() {
         if (!this.ready) return;
@@ -324,6 +445,7 @@ export default class menu extends Phaser.Scene {
         audioManager.playSound(0, 0.2, 1);
         this.difficultyActive = true;
         this.difficultyControl.setVisible(true);
+        this.difficultyControl.setInteractive();
         this.tweens.add({
             targets: this.difficulty,
             x: 650,
@@ -345,6 +467,7 @@ export default class menu extends Phaser.Scene {
     exitDificultad() {
         audioManager.playSound(0, 0.2, 1);
         this.difficultyActive = false;
+        this.difficultyControl.disableInteractive();
         this.tweens.add({
             targets: this.difficulty,
             x: 960,
@@ -369,6 +492,15 @@ export default class menu extends Phaser.Scene {
 
     opciones() {
         audioManager.playSound(0, 0.2, 1);
+        //menu
+        this.start.disableInteractive();
+        this.difficulty.disableInteractive();
+        this.settings.disableInteractive();
+        //settings
+        this.sound.setInteractive();
+        this.language.setInteractive();
+        this.back.setInteractive();
+
         this.settingActive = true;
         this.selector = 3;
         this.settingsimage.setVisible(true);
@@ -379,6 +511,15 @@ export default class menu extends Phaser.Scene {
     }
     exitOpciones() {
         audioManager.playSound(0, 0.2, 1);
+        //menu
+        this.start.setInteractive();
+        this.difficulty.setInteractive();
+        this.settings.setInteractive();
+        //settings
+        this.sound.disableInteractive();
+        this.language.disableInteractive();
+        this.back.disableInteractive();
+
         this.settingActive = false;
         this.selector = 1;
         this.settingsimage.setVisible(false);
@@ -390,6 +531,7 @@ export default class menu extends Phaser.Scene {
     volumen() {
         audioManager.playSound(0, 0.2, 1);
         this.soundActive = true;
+        this.soundControl.setInteractive();
         this.soundControl.setText(this.soundValue);
         this.tweens.add({
             targets: this.sound,
@@ -411,6 +553,7 @@ export default class menu extends Phaser.Scene {
     exitVolumen() {
         audioManager.playSound(0, 0.2, 1);
         this.soundActive = false;
+        this.soundControl.disableInteractive();
         this.tweens.add({
             targets: this.sound,
             x: 960,
@@ -444,6 +587,7 @@ export default class menu extends Phaser.Scene {
     idioma() {
         audioManager.playSound(0, 0.2, 1);
         this.idiomaActive = true;
+        this.languageControl.setInteractive();
 
         this.tweens.add({
             targets: this.language,
@@ -467,6 +611,7 @@ export default class menu extends Phaser.Scene {
     exitIdioma() {
         audioManager.playSound(0, 0.2, 1);
         this.idiomaActive = false;
+        this.languageControl.disableInteractive();
 
         this.tweens.add({
             targets: this.language,

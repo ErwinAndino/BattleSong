@@ -100,10 +100,10 @@ export default class game extends Phaser.Scene {
     let locationTR = 1850
     let locationTL = 70
 
-    this.indicatorUp = this.add.image(960, 160, "indicator").setOrigin(0.5, 0.5).setScale(12).setAngle(270); // W 380  W160 A580 S920 D1340
-    this.indicatorLeft = this.add.image(580, 540, "indicator").setOrigin(0.5, 0.5).setScale(12).setAngle(180); // A
-    this.indicatorDown = this.add.image(960, 920, "indicator").setOrigin(0.5, 0.5).setScale(12).setAngle(90); // S
-    this.indicatorRight = this.add.image(1340, 540, "indicator").setOrigin(0.5, 0.5).setScale(12).setAngle(0); // D
+    this.indicatorUp = this.add.image(960, 160, "indicator").setOrigin(0.5, 0.5).setScale(12).setAngle(270).setInteractive(); // W 380  W160 A580 S920 D1340
+    this.indicatorLeft = this.add.image(580, 540, "indicator").setOrigin(0.5, 0.5).setScale(12).setAngle(180).setInteractive(); // A
+    this.indicatorDown = this.add.image(960, 920, "indicator").setOrigin(0.5, 0.5).setScale(12).setAngle(90).setInteractive(); // S
+    this.indicatorRight = this.add.image(1340, 540, "indicator").setOrigin(0.5, 0.5).setScale(12).setAngle(0).setInteractive(); // D
 
     this.hpbarLeft = this.add.sprite(locationTL, 75, "hpbar_left", 0).setOrigin(0, 0.5).setScale(6);
     this.hpbarMiddle = this.add.sprite(locationTL + 192, 75, "hpbar_middle", 0).setOrigin(0, 0.5).setScale(6);
@@ -202,6 +202,23 @@ export default class game extends Phaser.Scene {
     this.keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
     this.keyZ = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Z);
 
+    this.indicatorUp.on('pointerdown', () => {
+      this.playerAction = 0; // Set player action to 1 for upward attack
+      this.timingDetector()
+    });
+    this.indicatorLeft.on('pointerdown', () => {
+      this.playerAction = 1; // Set player action to 1 for upward attack
+      this.timingDetector()
+    });
+    this.indicatorDown.on('pointerdown', () => {
+      this.playerAction = 2; // Set player action to 1 for upward attack
+      this.timingDetector()
+    });
+    this.indicatorRight.on('pointerdown', () => {
+      this.playerAction = 3; // Set player action to 1 for upward attack
+      this.timingDetector()
+    });
+
     this.cooldown = 0
 
     this.attackSequence = [] //1, 1, 1, 1, 1, 2, 3, 4
@@ -240,7 +257,10 @@ export default class game extends Phaser.Scene {
     this.moneyImage = this.physics.add.sprite(140, 140, "gold", 0).setScale(2).setOrigin(0.5, 0.5);
     this.moneyImage.anims.play("gold_anim", true);
 
-    this.scoreText = this.add.text(120, 190, t("score", { value: this.score }), {
+    this.scoreImage = this.add.sprite(140, 190, "score", 0).setScale(2).setOrigin(0.5, 0.5);
+    this.scoreImage.anims.play("score_anim", true);
+
+    this.scoreText = this.add.text(180, 188, this.score, {
       fontFamily: 'MelodicaRegular',
       fontSize: "40px",
       fill: "#fff",
@@ -671,7 +691,7 @@ export default class game extends Phaser.Scene {
       if (oldestIndicator.fail === false && oldestIndicator.type === this.playerAction) { // si no esta fallando y es el type correcto
         oldestIndicator.destroy();
         this.score += 10 * this.scoreMult; // Incrementa el score
-        this.scoreText.setText(t("score", { value: this.score })); // Actualiza el texto del score
+        this.scoreText.setText(this.score); // Actualiza el texto del score
         if (this.scoreMult < 2) {
           this.scoreMult += 0.1
         }

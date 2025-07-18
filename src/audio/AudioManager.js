@@ -268,8 +268,7 @@ class AudioManager {
     const randomNote = Tone.Frequency(randomMidi, "midi").toNote();
 
     if (this.instruments[index] && this.instruments[index].triggerAttackRelease) {
-      this.instruments[index].triggerAttackRelease(randomNote, duration);
-      console.log(`Reproduciendo nota aleatoria entre C4 y A4: ${randomNote}`);
+      this.instruments[index].triggerAttackRelease(randomNote, duration, Tone.now());
     }
   }
 

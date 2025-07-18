@@ -71,6 +71,10 @@ export default class tutorial extends Phaser.Scene {
             frameWidth: 32,
             frameHeight: 32,
         });
+        this.load.spritesheet("score", "assets/score.png", {
+            frameWidth: 32,
+            frameHeight: 32,
+        });
         this.load.spritesheet("enemy_king_idle", "assets/king_idle.png", {
             frameWidth: 32,
             frameHeight: 32,
@@ -130,6 +134,19 @@ export default class tutorial extends Phaser.Scene {
         });
 
         this.anims.create({
+            key: "score_anim",
+            frames: [
+                { key: "score", frame: 0 },
+                { key: "score", frame: 1 },
+                { key: "score", frame: 0 },
+                { key: "score", frame: 2 },
+                { key: "score", frame: 0, duration: 1000 } // 500 ms de pausa en el último frame
+            ],
+            frameRate: 10,
+            repeat: -1,
+        });
+
+        this.anims.create({
             key: "king_idle",
             frames: [
                 { key: "enemy_king_idle", frame: 1 },
@@ -159,10 +176,10 @@ export default class tutorial extends Phaser.Scene {
         this.scoreSequenceExecuted = false;
 
 
-        this.indicatorUp = this.add.image(960, 160, "indicator").setOrigin(0.5, 0.5).setScale(12).setAngle(270).setVisible(false).setAlpha(0); // W 380  W160 A580 S920 D1340
-        this.indicatorLeft = this.add.image(580, 540, "indicator").setOrigin(0.5, 0.5).setScale(12).setAngle(180).setVisible(false).setAlpha(0); // A
-        this.indicatorDown = this.add.image(960, 920, "indicator").setOrigin(0.5, 0.5).setScale(12).setAngle(90).setVisible(false).setAlpha(0); // S
-        this.indicatorRight = this.add.image(1340, 540, "indicator").setOrigin(0.5, 0.5).setScale(12).setAngle(0).setVisible(false).setAlpha(0); // D
+        this.indicatorUp = this.add.image(960, 160, "indicator").setOrigin(0.5, 0.5).setScale(12).setAngle(270).setAlpha(0).setInteractive(); // W 380  W160 A580 S920 D1340
+        this.indicatorLeft = this.add.image(580, 540, "indicator").setOrigin(0.5, 0.5).setScale(12).setAngle(180).setAlpha(0).setInteractive(); // A
+        this.indicatorDown = this.add.image(960, 920, "indicator").setOrigin(0.5, 0.5).setScale(12).setAngle(90).setAlpha(0).setInteractive(); // S
+        this.indicatorRight = this.add.image(1340, 540, "indicator").setOrigin(0.5, 0.5).setScale(12).setAngle(0).setAlpha(0).setInteractive(); // D
 
         this.hpbarLeft = this.add.sprite(locationTL, 75, "hpbar_left", 0).setOrigin(0, 0.5).setScale(6).setVisible(false).setAlpha(0);
         this.hpbarMiddle = this.add.sprite(locationTL + 192, 75, "hpbar_middle", 0).setOrigin(0, 0.5).setScale(6).setVisible(false).setAlpha(0);
@@ -190,7 +207,10 @@ export default class tutorial extends Phaser.Scene {
         this.moneyImage = this.add.sprite(140, 140, "gold", 0).setScale(2).setOrigin(0.5, 0.5).setVisible(false).setAlpha(0);
         this.moneyImage.anims.play("gold_anim", true);
 
-        this.scoreText = this.add.text(120, 190, t("score", { value: this.score }), {
+        this.scoreImage = this.add.sprite(140, 190, "score", 0).setScale(2).setOrigin(0.5, 0.5).setVisible(false).setAlpha(0);
+        this.scoreImage.anims.play("score_anim", true);
+
+        this.scoreText = this.add.text(180, 188, this.score, {
             fontFamily: 'MelodicaRegular',
             fontSize: "40px",
             fill: "#fff",
@@ -218,6 +238,34 @@ export default class tutorial extends Phaser.Scene {
             fill: "#fff"
         }).setOrigin(1, 0.5).setAlpha(0);
 
+        this.tutorialContents = [
+            { text: "", x: 2000, y: 540 },
+            { text: t("tutorialAttack"), x: 1460, y: 540 },
+            { text: t("tutorialHealth"), x: 200, y: 200 },
+            { text: t("tutorialTime"), x: 1350, y: 200 },
+            { text: t("tutorialMoney"), x: 250, y: 160 },
+            { text: t("tutorialMoney"), x: 250, y: 160 },
+            { text: t("tutorialScore"), x: 250, y: 190 },
+        ]
+
+
+        this.tutorialBox = this.add.text(2000, 540, "", {
+            fontFamily: 'MelodicaRegular',
+            fontSize: "32px",
+            fill: "#fff",
+            wordWrap: { width: 440, useAdvancedWrap: true },
+            align: 'justify',
+            stroke: "#000000ff",
+            strokeThickness: 2
+        }).setOrigin(0, 0.5).setDepth(14);
+
+        this.tutorialIndex = 0
+
+        this.background = this.add.graphics();
+        this.background.fillStyle(0x000000, 0.5); // negro, 50% opacidad
+        this.background.setDepth(12)
+        this.drawBackground();
+
         this.tweens.add({
             targets: [this.controls, this.skipText, this.continueText, this.beforeText],
             alpha: 1,
@@ -237,8 +285,6 @@ export default class tutorial extends Phaser.Scene {
         this.keyZ = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Z);
 
         this.tutorialComplete = true;
-
-        this.tutorialStage = 0
 
         this.king = this.add.sprite(960, 540, "enemy_king_idle", 1).setScale(12).setOrigin(0.5, 0.5)
         this.king.anims.play("king_idle", true);
@@ -289,6 +335,16 @@ export default class tutorial extends Phaser.Scene {
         this.textHistory = [t("tutorial1"), ...this.textContent];
         this.textIndex = 0;
 
+        this.buttonLeft = this.add.zone(580, 540, 300, 400)
+            .setOrigin(0.5)
+            .setInteractive();
+
+        this.buttonRight = this.add.zone(1340, 540, 300, 400)
+            .setOrigin(0.5)
+            .setInteractive();
+
+        this.buttonLeft.on('pointerdown', this.previousText, this);
+        this.buttonRight.on('pointerdown', this.nextText, this);
     }
     update(time, delta) {
 
@@ -339,6 +395,12 @@ export default class tutorial extends Phaser.Scene {
     }
     nextText() {
         if (this.textIndex < this.textHistory.length - 1) {
+            if (this.textIndex >= 3 && this.textIndex <= 8) {
+                this.tutorialIndex++;
+                this.tutorialBox.setText(this.tutorialContents[this.tutorialIndex].text);
+                this.tutorialBox.setPosition(this.tutorialContents[this.tutorialIndex].x, this.tutorialContents[this.tutorialIndex].y)
+                this.drawBackground();
+            }
             this.textIndex++;
             const next = this.textHistory[this.textIndex];
             audioManager.playSound(0, 0.2, -1);
@@ -363,6 +425,12 @@ export default class tutorial extends Phaser.Scene {
     // Nueva función previousText
     previousText() {
         if (this.textIndex > 0) {
+            if (this.textIndex >= 4 && this.textIndex <= 9) {
+                this.tutorialIndex--;
+                this.tutorialBox.setText(this.tutorialContents[this.tutorialIndex].text);
+                this.tutorialBox.setPosition(this.tutorialContents[this.tutorialIndex].x, this.tutorialContents[this.tutorialIndex].y)
+                this.drawBackground();
+            }
             this.textIndex--;
             const prev = this.textHistory[this.textIndex];
             audioManager.playSound(0, 0.2, -2);
@@ -385,11 +453,6 @@ export default class tutorial extends Phaser.Scene {
             return;
         }
         this.attackSequenceExecuted = true;
-
-        this.indicatorUp.setVisible(true);
-        this.indicatorLeft.setVisible(true);
-        this.indicatorDown.setVisible(true);
-        this.indicatorRight.setVisible(true);
 
         this.tweens.add({
             targets: [this.indicatorUp, this.indicatorLeft, this.indicatorDown, this.indicatorRight], // varios objetos 
@@ -414,7 +477,6 @@ export default class tutorial extends Phaser.Scene {
         this.hpbarMiddle.setVisible(true);
         this.hpbarRight.setVisible(true);
         this.healthPlayerText.setVisible(true);
-
 
         this.tweens.add({
             targets: [this.hpbarLeft, this.hpbarMiddle, this.hpbarRight, this.healthPlayerText], // varios objetos 
@@ -545,6 +607,7 @@ export default class tutorial extends Phaser.Scene {
         this.moneySequenceExecuted = true;
         this.moneyText.setVisible(true);
         this.moneyImage.setVisible(true);
+
         this.tweens.add({
             targets: [this.moneyText, this.moneyImage], // varios objetos 
             alpha: 1,
@@ -571,12 +634,29 @@ export default class tutorial extends Phaser.Scene {
         }
         this.scoreSequenceExecuted = true;
         this.scoreText.setVisible(true);
+        this.scoreImage.setVisible(true);
+
         this.tweens.add({
-            targets: this.scoreText, // varios objetos 
+            targets: [this.scoreText, this.scoreImage], // varios objetos 
             alpha: 1,
             duration: 1000,
             ease: 'Power2',
         });
+    }
+
+    drawBackground() {
+        const padding = 10;
+        const bounds = this.tutorialBox.getBounds();
+
+        this.background.clear();
+        this.background.fillStyle(0x000000, 0.5);
+        this.background.fillRoundedRect(
+            bounds.x - padding,
+            bounds.y - padding,
+            bounds.width + padding * 2,
+            bounds.height + padding * 2,
+            8
+        );
     }
 
     startGame() {
