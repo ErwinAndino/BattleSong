@@ -30,31 +30,51 @@ export default class menu extends Phaser.Scene {
         await loadTranslations(this); // ya no es async
 
         let started = false;
+        let audioUnlocked = false;
+
+        const unlockAudio = async () => {
+            if (audioUnlocked) return true;
+            try {
+                await audioManager.unlock(); // Necesita gesto del usuario
+                console.log("Audio desbloqueado");
+                audioUnlocked = true;
+                return true;
+            } catch (e) {
+                console.warn("No se pudo desbloquear el audio aún.");
+                return false;
+            }
+        };
 
         const startMenu = async () => {
             if (started) return;
             started = true;
 
-            await audioManager.start();
+            await audioManager.start(); // Ya no intenta desbloquear audio acá
             this.setVolumen(this.soundValue);
 
             this.selector = 2;
-            this.start.setVisible(true);
-            this.start.setInteractive();
-            this.difficulty.setVisible(true);
-            this.difficulty.setInteractive();
-            this.settings.setVisible(true);
-            this.settings.setInteractive();
+            this.start.setVisible(true).setInteractive();
+            this.difficulty.setVisible(true).setInteractive();
+            this.settings.setVisible(true).setInteractive();
             this.hiScoreText.setVisible(true);
             this.pressButton.setVisible(false);
         };
+        const onFirstInteraction = async () => {
+            const unlocked = await unlockAudio();
+            if (unlocked) {
+                startMenu();
+                if (this.sys.canvas) {
+                    this.sys.canvas.addEventListener('touchstart', startMenu, { once: true });
+                }
+            } else {
+                // Si falla, permite intentar de nuevo
+                console.warn("Primer click no desbloqueó el audio, esperando otro intento...");
+            }
+        };
 
-        // Escucha una sola vez por teclado
-        this.input.keyboard.once('keydown', startMenu);
-
-        // Escucha una sola vez por pantalla táctil o clic
-        this.input.once('pointerdown', startMenu);
-
+        // Esperá múltiples intentos hasta que logre desbloquear el audio
+        this.input.on('pointerdown', onFirstInteraction);
+        this.input.keyboard.on('keydown', onFirstInteraction);
         //crear fondo
         this.add.image(960, 540, "background_menu").setScale(8).setOrigin(0.5, 0.5);
 
@@ -649,11 +669,13 @@ export default class menu extends Phaser.Scene {
         this.difficulty.setText(t("difficulty"));
         this.settings.setText(t("settings"));
         this.hiScoreText.setText(t("highScore", { score: this.hiScore }));
+        this.copyrightText.setText("© 2025 Erwin Andino");
         this.sound.setText(t("sound"));
         this.language.setText(t("language"));
         this.back.setText(t("back"));
         this.pressButton.setText(t("pressButton"));
         this.languageControl.setText(t("lang"));
+
 
         if (this.difficultyLevel === 0) {
             this.difficultyControl.setText(t("easy"))

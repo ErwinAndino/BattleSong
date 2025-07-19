@@ -147,38 +147,17 @@ export default class store extends Phaser.Scene {
         fill: "#fff"
       }).setOrigin(0, 0.5);
 
-      img.on("pointerover", () => {
-        this.selectedIndex = i; // Cambia el ítem seleccionado
-        this.highlightSelection(); // Aplica el efecto visual
-      });
-
-      img.on("pointerout", () => {
-        this.selectedIndex = -1;
-        this.highlightSelection();
-      });
-
       img.on("pointerdown", () => {
-        if (this.money >= item.price) {
-          audioManager.playSound(0, 0.2, 1);
-          this.money -= item.price; // Descuenta aquí, antes de comprar
-          this.moneyText.setText(this.money);
-          this.buySelectedItem();
-          this.tweens.add({
-            targets: this.moneyImage,
-            scale: 3,
-            duration: 300,
-            yoyo: true,
-            ease: 'Power2',
-          });
-        } else {
-          audioManager.playSound(0, 0.2, -1);
-          this.buyText.setVisible(false);
-          this.cantBuyText.setVisible(true);
+        const index = this.itemImages.findIndex(obj => obj.img === img);
 
-          this.time.delayedCall(3000, () => {
-            this.cantBuyText.setVisible(false);
-          });
+        if (index === -1) return;
+
+        if (this.selectedIndex != index) {
+          this.selectedIndex = index; // Cambia el ítem seleccionado
+          this.highlightSelection(); // Aplica el efecto visual
+          return
         }
+        this.buySelectedItem();
       });
 
       this.itemImages.push({ img, label, price, m });
@@ -235,27 +214,7 @@ export default class store extends Phaser.Scene {
         this.overlay.setVisible(false);
         return
       }
-      if (this.money >= this.item.price) {
-        audioManager.playSound(0, 0.2, 1);
-        this.money -= this.item.price; // Descuenta aquí, antes de comprar
-        this.moneyText.setText(this.money);
-        this.buySelectedItem();
-        this.tweens.add({
-          targets: this.moneyImage,
-          scale: 3,
-          duration: 300,
-          yoyo: true,
-          ease: 'Power2',
-        });
-      } else {
-        audioManager.playSound(0, 0.2, -1);
-        this.buyText.setVisible(false);
-        this.cantBuyText.setVisible(true);
-
-        this.time.delayedCall(3000, () => {
-          this.cantBuyText.setVisible(false);
-        });
-      }
+      this.buySelectedItem();
     }
     if (Phaser.Input.Keyboard.JustDown(this.keyA) || Phaser.Input.Keyboard.JustDown(this.cursors.left)) {
       this.selectedIndex = (this.selectedIndex - 1 + this.itemImages.length) % this.itemImages.length;
@@ -374,45 +333,73 @@ export default class store extends Phaser.Scene {
 
   // Acción de compra
   buySelectedItem() {
+    const item = this.itemImages[this.selectedIndex];
+    if (!item) return;
 
-    if (this.item.key === "potion") {
-      this.healthPlayer += 30;
-      if (this.healthPlayer > 100) {
-        this.healthPlayer = 100; // Limitar la salud máxima a 100
-      }
-      this.healthPlayerText.setText(t("health", { value: this.healthPlayer }));
+    const selectedItemData = this.seleccionados[this.selectedIndex];
+    if (!selectedItemData) return;
+
+    // Verifica dinero
+    if (this.money >= selectedItemData.price) {
+      audioManager.playSound(0, 0.2, 1);
+      this.money -= selectedItemData.price;
+      this.moneyText.setText(this.money);
+
+      // Animación visual
+      this.tweens.add({
+        targets: this.moneyImage,
+        scale: 3,
+        duration: 300,
+        yoyo: true,
+        ease: 'Power2',
+      });
+    } else {
+      // No alcanza el dinero
+      audioManager.playSound(0, 0.2, -1);
+      this.buyText.setVisible(false);
+      this.cantBuyText.setVisible(true);
+      this.time.delayedCall(3000, () => this.cantBuyText.setVisible(false));
+      return;
     }
-    // Aquí va tu lógica de compra, por ejemplo:
-    this.buyText.setText(t("bought", { value: this.item.label }));
 
-    this.cantBuyText.setVisible(false);
-    this.buyText.setVisible(true);
+    // Quitar visuales
+    item.img.destroy();
+    item.label.destroy();
+    item.price.destroy();
+    item.m.destroy();
 
-    this.time.delayedCall(3000, () => {
-      this.buyText.setVisible(false)
-    });
-
-    // Eliminar visualmente el ítem comprado
-    this.itemImages[this.selectedIndex].img.destroy();
-    this.itemImages[this.selectedIndex].label.destroy();
-    this.itemImages[this.selectedIndex].m.destroy();
-    this.itemImages[this.selectedIndex].price.destroy();
-
-    // Eliminar el ítem de los arrays
-    this.seleccionados.splice(this.selectedIndex, 1);
+    // Remover del array visual y lógico
     this.itemImages.splice(this.selectedIndex, 1);
+    this.seleccionados.splice(this.selectedIndex, 1);
 
-    // Ajustar el índice seleccionado
+    // Corregir índice
     if (this.selectedIndex >= this.itemImages.length) {
-      this.selectedIndex = Math.max(0, this.itemImages.length - 1);
+      this.selectedIndex = this.itemImages.length - 1;
     }
 
-    // Actualizar la selección visual si quedan ítems
+    // Actualizar referencia a item (si quedan)
     if (this.itemImages.length > 0) {
       this.item = this.seleccionados[this.selectedIndex];
       this.highlightSelection();
+      this.buyText.setText(t("bought", { value: this.item.label }));
+    } else {
+      this.item = null;
+      this.buyText.setText(t("bought_empty")); // O un texto genérico como "No quedan items"
+    }
+
+    // Mostrar mensaje de compra
+    this.cantBuyText.setVisible(false);
+    this.buyText.setVisible(true);
+    this.time.delayedCall(3000, () => this.buyText.setVisible(false));
+
+    // Lógica según el tipo del ítem
+    if (selectedItemData.key === "potion") {
+      this.healthPlayer += 30;
+      if (this.healthPlayer > 100) this.healthPlayer = 100;
+      this.healthPlayerText.setText(t("health", { value: this.healthPlayer }));
     }
   }
+
 
   exit() {
     this.scene.start("game", {

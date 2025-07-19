@@ -176,10 +176,17 @@ export default class tutorial extends Phaser.Scene {
         this.scoreSequenceExecuted = false;
 
 
-        this.indicatorUp = this.add.image(960, 160, "indicator").setOrigin(0.5, 0.5).setScale(12).setAngle(270).setAlpha(0).setInteractive(); // W 380  W160 A580 S920 D1340
-        this.indicatorLeft = this.add.image(580, 540, "indicator").setOrigin(0.5, 0.5).setScale(12).setAngle(180).setAlpha(0).setInteractive(); // A
-        this.indicatorDown = this.add.image(960, 920, "indicator").setOrigin(0.5, 0.5).setScale(12).setAngle(90).setAlpha(0).setInteractive(); // S
-        this.indicatorRight = this.add.image(1340, 540, "indicator").setOrigin(0.5, 0.5).setScale(12).setAngle(0).setAlpha(0).setInteractive(); // D
+        this.indicatorUp = this.add.image(960, 160, "indicator").setOrigin(0.5, 0.5).setScale(12).setAngle(270).setAlpha(0); // W 380  W160 A580 S920 D1340
+        this.indicatorLeft = this.add.image(580, 540, "indicator").setOrigin(0.5, 0.5).setScale(12).setAngle(180).setAlpha(0); // A
+        this.indicatorDown = this.add.image(960, 920, "indicator").setOrigin(0.5, 0.5).setScale(12).setAngle(90).setAlpha(0); // S
+        this.indicatorRight = this.add.image(1340, 540, "indicator").setOrigin(0.5, 0.5).setScale(12).setAngle(0).setAlpha(0); // D
+
+        this.tweens.add({
+            targets: [this.indicatorUp, this.indicatorLeft, this.indicatorDown, this.indicatorRight], // varios objetos 
+            alpha: 1,
+            duration: 1000,
+            ease: 'Power2',
+        });
 
         this.hpbarLeft = this.add.sprite(locationTL, 75, "hpbar_left", 0).setOrigin(0, 0.5).setScale(6).setVisible(false).setAlpha(0);
         this.hpbarMiddle = this.add.sprite(locationTL + 192, 75, "hpbar_middle", 0).setOrigin(0, 0.5).setScale(6).setVisible(false).setAlpha(0);
@@ -335,13 +342,41 @@ export default class tutorial extends Phaser.Scene {
         this.textHistory = [t("tutorial1"), ...this.textContent];
         this.textIndex = 0;
 
+        this.buttonUp = this.add.zone(960, 160, 300, 400)
+            .setOrigin(0.5)
+            .setInteractive();
+
         this.buttonLeft = this.add.zone(580, 540, 300, 400)
+            .setOrigin(0.5)
+            .setInteractive();
+
+        this.buttonDown = this.add.zone(960, 920, 300, 400)
             .setOrigin(0.5)
             .setInteractive();
 
         this.buttonRight = this.add.zone(1340, 540, 300, 400)
             .setOrigin(0.5)
             .setInteractive();
+
+        this.isHolding = false;
+
+        this.buttonDown.on('pointerdown', () => {
+            this.isHolding = true;
+        });
+
+        this.buttonDown.on('pointerup', () => {
+            this.isHolding = false;
+        });
+
+        this.buttonUp.on('pointerdown', function () {
+            this.indicatorUp.setTint(0xFFC300);
+            this.time.addEvent({
+                delay: 300, // Reset enemy color after a short delay
+                callback: () => {
+                    this.indicatorUp.clearTint();
+                },
+            });
+        }, this);
 
         this.buttonLeft.on('pointerdown', this.previousText, this);
         this.buttonRight.on('pointerdown', this.nextText, this);
@@ -352,7 +387,18 @@ export default class tutorial extends Phaser.Scene {
             this.startGame()
         }
 
-        if (this.keyS.isDown || this.cursors.down.isDown) {
+        if (Phaser.Input.Keyboard.JustDown(this.keyW) || Phaser.Input.Keyboard.JustDown(this.cursors.up)) {
+            this.indicatorUp.setTint(0xFFC300);
+            this.time.addEvent({
+                delay: 300, // Reset enemy color after a short delay
+                callback: () => {
+                    this.indicatorUp.clearTint();
+                },
+            });
+        }
+
+        if (this.keyS.isDown || this.cursors.down.isDown || this.isHolding) {
+            this.indicatorDown.setTint(0x51ff00);
             if (this.sHoldStart === null) {
                 this.sHoldStart = time; // Guarda el tiempo de inicio
             } else if (time - this.sHoldStart >= this.sHoldThreshold) {
@@ -362,6 +408,7 @@ export default class tutorial extends Phaser.Scene {
                 this.sHoldStart = -Infinity; // Para que no se repita hasta soltar y volver a presionar
             }
         } else {
+            this.indicatorDown.clearTint();
             // Si se suelta la tecla, reinicia el tiempo de inicio
             this.sHoldStart = null;
         }
@@ -394,6 +441,15 @@ export default class tutorial extends Phaser.Scene {
         }
     }
     nextText() {
+
+        this.indicatorRight.setTint(0xff2a00);
+        this.time.addEvent({
+            delay: 300, // Reset enemy color after a short delay
+            callback: () => {
+                this.indicatorRight.clearTint();
+            },
+        });
+
         if (this.textIndex < this.textHistory.length - 1) {
             if (this.textIndex >= 3 && this.textIndex <= 8) {
                 this.tutorialIndex++;
@@ -424,6 +480,15 @@ export default class tutorial extends Phaser.Scene {
 
     // Nueva función previousText
     previousText() {
+
+        this.indicatorLeft.setTint(0x0046ff);
+        this.time.addEvent({
+            delay: 300, // Reset enemy color after a short delay
+            callback: () => {
+                this.indicatorLeft.clearTint();
+            },
+        });
+
         if (this.textIndex > 0) {
             if (this.textIndex >= 4 && this.textIndex <= 9) {
                 this.tutorialIndex--;
@@ -453,13 +518,6 @@ export default class tutorial extends Phaser.Scene {
             return;
         }
         this.attackSequenceExecuted = true;
-
-        this.tweens.add({
-            targets: [this.indicatorUp, this.indicatorLeft, this.indicatorDown, this.indicatorRight], // varios objetos 
-            alpha: 1,
-            duration: 1000,
-            ease: 'Power2',
-        });
 
         for (let i = 0; i < 12; i++) {
             this.time.delayedCall(2000 * i, () => {

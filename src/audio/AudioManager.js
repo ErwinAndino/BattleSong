@@ -17,9 +17,12 @@ class AudioManager {
 
     this.setupVisibilityHandler();
   }
+  async unlock() {
+    await Tone.start();
+  }
 
   async start() {
-    await Tone.start();
+
     await Promise.all([
       this.loadSynth(0, "synth"),
       this.loadSynth(1, "poly"),

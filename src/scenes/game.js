@@ -9,7 +9,7 @@ export default class game extends Phaser.Scene {
   init(data) {
     this.score = data.score || 0;
     this.hiScore = data.hiScore || 0; // Valor inicial del puntaje más alto
-    this.money = data.money || 10;
+    this.money = data.money || 100;
     this.soundValue = data.soundValue || 100; // Valor inicial del volumen
     this.tutorialComplete = data.tutorialComplete || false; // Valor para saber si el tutorial se completó
     this.healthPlayer = data.healthPlayer || 100; // Valor inicial de la salud del jugador
