@@ -113,7 +113,7 @@ export default class menu extends Phaser.Scene {
             fontSize: "60px",
         }).setOrigin(0, 0.5).setColor("#ffffff").setVisible(false);
 
-        this.copyrightText = this.add.text(1900, 1000, "© 2025 Erwin Andino", {
+        this.copyrightText = this.add.text(1900, 1000, "...", {
             fontFamily: 'MelodicaRegular',
             fontSize: "60px",
         }).setOrigin(1, 0.5).setColor("#ffffff").setVisible(true);
