@@ -53,6 +53,7 @@ export default class menu extends Phaser.Scene {
             this.setVolumen(this.soundValue);
 
             this.selector = 2;
+            this.highlightSelection(this.selector);
             this.start.setVisible(true).setInteractive();
             this.difficulty.setVisible(true).setInteractive();
             this.settings.setVisible(true).setInteractive();
@@ -171,24 +172,24 @@ export default class menu extends Phaser.Scene {
 
         //menu
         this.start.on('pointerover', () => {
-            this.selector = 3;
+            this.highlightSelection(3);
         });
         this.difficulty.on('pointerover', () => {
-            this.selector = 2;
+            this.highlightSelection(2);
         });
         this.settings.on('pointerover', () => {
-            this.selector = 1;
+            this.highlightSelection(1);
         });
 
         //settings
         this.sound.on('pointerover', () => {
-            this.selector = 3;
+            this.highlightSelection(3);
         });
         this.language.on('pointerover', () => {
-            this.selector = 2;
+            this.highlightSelection(2);
         });
         this.back.on('pointerover', () => {
-            this.selector = 1;
+            this.highlightSelection(1);
         });
 
         //menu
@@ -370,6 +371,7 @@ export default class menu extends Phaser.Scene {
                 if (this.selector > 3) {
                     this.selector = 3; // Cambia a 1 si solo hay dos opciones
                 }
+                this.highlightSelection(this.selector)
             }
             if (Phaser.Input.Keyboard.JustDown(this.keyA) || Phaser.Input.Keyboard.JustDown(this.cursors.left) || Phaser.Input.Keyboard.JustDown(this.keyEnter)) {
                 if (this.selector === 3) {
@@ -385,6 +387,7 @@ export default class menu extends Phaser.Scene {
                 if (this.selector < 1) {
                     this.selector = 1; // Cambia a 1 si solo hay dos opciones
                 }
+                this.highlightSelection(this.selector)
             }
             if (Phaser.Input.Keyboard.JustDown(this.keyD) || Phaser.Input.Keyboard.JustDown(this.cursors.right) || Phaser.Input.Keyboard.JustDown(this.keyEnter)) {
                 if (this.selector === 3) {
@@ -401,6 +404,7 @@ export default class menu extends Phaser.Scene {
                 if (this.selector > 3) {
                     this.selector = 3; // Cambia a 1 si solo hay dos opciones
                 }
+                this.highlightSelection(this.selector)
             }
             if (Phaser.Input.Keyboard.JustDown(this.keyA) || Phaser.Input.Keyboard.JustDown(this.cursors.left) || Phaser.Input.Keyboard.JustDown(this.keyEnter)) {
                 if (this.selector === 3) {
@@ -416,6 +420,7 @@ export default class menu extends Phaser.Scene {
                 if (this.selector < 1) {
                     this.selector = 1; // Cambia a 1 si solo hay dos opciones
                 }
+                this.highlightSelection(this.selector)
             }
             if (Phaser.Input.Keyboard.JustDown(this.keyD) || Phaser.Input.Keyboard.JustDown(this.cursors.right) || Phaser.Input.Keyboard.JustDown(this.keyEnter)) {
                 if (this.selector === 3) {
@@ -427,39 +432,56 @@ export default class menu extends Phaser.Scene {
                 }
             }
         }
-        if (this.start != null && this.settings != null) {
-            if (this.selector === 3) {
-                this.start.setColor("#ffd700");
-                this.difficulty.setColor("#ffffff");
-                this.settings.setColor("#ffffff");
-            } else if (this.selector === 2) {
-                this.start.setColor("#ffffff");
-                this.difficulty.setColor("#ffd700");
-                this.settings.setColor("#ffffff");
-            } else if (this.selector === 1) {
-                this.start.setColor("#ffffff");
-                this.difficulty.setColor("#ffffff");
-                this.settings.setColor("#ffd700");
+
+    }
+    highlightSelection(selector) {
+        if (this.sound && this.language && this.back) {
+            if (this.settingActive) {
+                switch (selector) {
+                    case 3:
+                        this.sound.setColor("#ffd700");
+                        this.language.setColor("#ffffff");
+                        this.back.setColor("#ffffff");
+                        break;
+
+                    case 2:
+                        this.sound.setColor("#ffffff");
+                        this.language.setColor("#ffd700");
+                        this.back.setColor("#ffffff");
+                        break;
+
+                    case 1:
+                        this.sound.setColor("#ffffff");
+                        this.language.setColor("#ffffff");
+                        this.back.setColor("#ffd700");
+                        break;
+                }
+                return
             }
         }
+        if (this.start && this.settings && this.difficulty) {
+            switch (selector) {
+                case 3:
+                    this.start.setColor("#ffd700");
+                    this.difficulty.setColor("#ffffff");
+                    this.settings.setColor("#ffffff");
+                    break;
 
-        if (this.settingActive) {
-            if (this.selector === 3) {
-                this.sound.setColor("#ffd700");
-                this.language.setColor("#ffffff");
-                this.back.setColor("#ffffff");
-            } else if (this.selector === 2) {
-                this.sound.setColor("#ffffff");
-                this.language.setColor("#ffd700");
-                this.back.setColor("#ffffff");
-            } else if (this.selector === 1) {
-                this.sound.setColor("#ffffff");
-                this.language.setColor("#ffffff");
-                this.back.setColor("#ffd700");
+                case 2:
+                    this.start.setColor("#ffffff");
+                    this.difficulty.setColor("#ffd700");
+                    this.settings.setColor("#ffffff");
+
+                    break;
+
+                case 1:
+                    this.start.setColor("#ffffff");
+                    this.difficulty.setColor("#ffffff");
+                    this.settings.setColor("#ffd700");
+                    break;
             }
+
         }
-
-
     }
     dificultad() {
         audioManager.playSound(0, 0.2, 1);
@@ -523,6 +545,7 @@ export default class menu extends Phaser.Scene {
 
         this.settingActive = true;
         this.selector = 3;
+        this.highlightSelection(this.selector)
         this.settingsimage.setVisible(true);
         this.overlay.setVisible(true);
         this.sound.setVisible(true);
@@ -542,6 +565,7 @@ export default class menu extends Phaser.Scene {
 
         this.settingActive = false;
         this.selector = 1;
+        this.highlightSelection(this.selector)
         this.settingsimage.setVisible(false);
         this.overlay.setVisible(false);
         this.sound.setVisible(false);

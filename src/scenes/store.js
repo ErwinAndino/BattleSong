@@ -164,6 +164,8 @@ export default class store extends Phaser.Scene {
       }).setOrigin(0, 0.5);
 
       img.on("pointerdown", () => {
+        if (this.exitActive) return;
+
         const index = this.itemImages.findIndex(obj => obj.img === img);
 
         if (index === -1) return;
@@ -211,6 +213,13 @@ export default class store extends Phaser.Scene {
       fontSize: "80px",
       fill: "#fff"
     }).setOrigin(0.5, 0.5).setVisible(false).setInteractive();
+
+    this.salir.on('pointerover', () => {
+      this.salir.setColor("#ffd700")
+    });
+    this.salir.on('pointerout', () => {
+      this.salir.setColor("#ffffff")
+    });
 
     this.salir.on('pointerdown', () => {
       this.exitMessage();

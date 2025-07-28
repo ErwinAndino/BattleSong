@@ -9,7 +9,7 @@ export default class game extends Phaser.Scene {
   init(data) {
     this.score = data.score || 0;
     this.hiScore = data.hiScore || 0; // Valor inicial del puntaje más alto
-    this.money = data.money || 100;
+    this.money = data.money || 10;
     this.soundValue = data.soundValue || 100; // Valor inicial del volumen
     this.tutorialComplete = data.tutorialComplete || false; // Valor para saber si el tutorial se completó
     this.healthPlayer = data.healthPlayer || 100; // Valor inicial de la salud del jugador
@@ -201,6 +201,7 @@ export default class game extends Phaser.Scene {
     this.keyS = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
     this.keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
     this.keyZ = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Z);
+    this.keyX = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.X);
 
     this.indicatorUp.on('pointerdown', () => {
       this.playerAction = 0; // Set player action to 1 for upward attack
@@ -324,6 +325,7 @@ export default class game extends Phaser.Scene {
     this.musicOptionsPrincipio = [
       [null, 'midi/chords.mid', 'midi/base_principio.mid', 'midi/lead_principio.mid'],
       ['midi/bass_principio.mid', 'midi/chords.mid', 'midi/base_principio.mid', 'midi/lead_principio.mid'],
+      ['midi/bass_principio.mid', 'midi/chords.mid', 'midi/base_principio.mid', null],
     ];
     this.musicOptionsIntermedio = [
       ['midi/bass_intermedio.mid', 'midi/chords.mid', 'midi/base_intermedio.mid', 'midi/lead_intermedio.mid'],
@@ -340,6 +342,7 @@ export default class game extends Phaser.Scene {
     this.musicOptionsOutro = [
       [null, 'midi/chords.mid', 'midi/base_intro.mid', null],
       ['midi/bass_principio.mid', null, 'midi/base_intro.mid', null],
+      ['midi/bass_principio.mid', null, 'midi/base_intro.mid', 'midi/lead_principio.mid'],
     ];
 
     // Elige aleatorio de cada grupo
@@ -404,7 +407,7 @@ export default class game extends Phaser.Scene {
 
       if (this.attackCooldown) {
         if (midiIndex === 2) {
-          if (this.baseCounter > 6) {
+          if (this.baseCounter > 4) {
             this.attackCooldownBase = true;
             this.baseCounter = 0;
           }
@@ -452,6 +455,10 @@ export default class game extends Phaser.Scene {
 
     if (Phaser.Input.Keyboard.JustDown(this.keyZ)) {
       this.enemyDefeated()
+    }
+
+    if (Phaser.Input.Keyboard.JustDown(this.keyX)) {
+      this.gameOver()
     }
     //Detectar teclas
     // W
@@ -631,8 +638,8 @@ export default class game extends Phaser.Scene {
     //guarda que tipo de ataque es 
     indicator.attackType = attackType
     //guarda si se deberia fallar o no
-    indicator.fail = true;
-    this.time.delayedCall(this.delay - ((this.delay * 0.2) + 100), () => {
+    indicator.fail = 0;
+    this.time.delayedCall(this.delay - ((this.delay * 0.3) + 100), () => {
       this.tweens.add({
         targets: indicator,
         scale: 12,
@@ -641,8 +648,37 @@ export default class game extends Phaser.Scene {
       });
 
     });
+    this.time.delayedCall(this.delay - (this.delay * 0.3), () => {
+      indicator.fail = 1;
+
+    });
     this.time.delayedCall(this.delay - (this.delay * 0.2), () => {
-      indicator.fail = false;
+      indicator.fail = 2;
+
+    });
+    this.time.delayedCall(this.delay - (this.delay * 0.1), () => {
+      indicator.fail = 3;
+
+    });
+    this.time.delayedCall(this.delay, () => {
+      indicator.fail = 2;
+
+    });
+    this.time.delayedCall(this.delay + (this.delay * 0.1), () => {
+      indicator.fail = 1;
+
+    });
+    this.time.delayedCall(this.delay + (this.delay * 0.2), () => {
+      indicator.fail = 0;
+
+    });
+    this.time.delayedCall(this.delay + (this.delay * 0.2) - 100, () => {
+      this.tweens.add({
+        targets: indicator,
+        scale: 10,
+        duration: 100,
+        ease: 'Power2',
+      });
     });
 
     //animar
@@ -654,17 +690,8 @@ export default class game extends Phaser.Scene {
       duration: this.delay, // Tiempo en ms
       ease: 'Linear',
       onComplete: () => {
-        this.time.delayedCall((this.delay * 0.2) - 100, () => {
-          this.tweens.add({
-            targets: indicator,
-            scale: 10,
-            duration: 100,
-            ease: 'Power2',
-          });
-        });
-        this.time.delayedCall(this.delay * 0.2, () => {
-          indicator.fail = true;
-        });
+
+
         // Segundo tween: desvanecer (último 50% del tiempo)
         this.tweens.add({
           targets: indicator,
@@ -711,14 +738,29 @@ export default class game extends Phaser.Scene {
       }
     }
     if (!oldestIndicator) return; // No hay indicador activo
-
     if (oldestIndicator && oldestIndicator.active) {
-      if (oldestIndicator.fail === false && oldestIndicator.type === this.playerAction) { // si no esta fallando y es el type correcto
+      if (oldestIndicator.fail != 0 && oldestIndicator.type === this.playerAction) { // si no esta fallando y es el type correcto
         oldestIndicator.destroy();
-        this.score += 10 * this.scoreMult; // Incrementa el score
+        this.score += Math.ceil(2 * oldestIndicator.fail + this.scoreMult); // Incrementa el score
+        if (oldestIndicator.fail === 3) {
+          this.scoreText.setColor("#e4bf1bff")
+          this.tweens.add({
+            targets: this.scoreText,
+            scale: 1.5,
+            duration: 500,
+            ease: 'Power2',
+            yoyo: true,
+            onComplete: () => {
+              this.scoreText.setColor("#ffffff");
+              this.scoreText.setScale(1);
+            }
+          })
+
+        }
+        console.log(`Indicator.fail ${oldestIndicator.fail} score: ${10 * oldestIndicator.fail * this.scoreMult}`)
         this.scoreText.setText(this.score); // Actualiza el texto del score
-        if (this.scoreMult < 2) {
-          this.scoreMult += 0.1
+        if (this.scoreMult < 10) {
+          this.scoreMult += 0.5
         }
 
         if (this.playerAction === 0) {
