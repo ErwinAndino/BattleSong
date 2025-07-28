@@ -241,16 +241,27 @@ export default class game extends Phaser.Scene {
       callbackScope: this,
       loop: true,
     });
+
+    const device = this.sys.game.device;
+
+    if (device.os.desktop) {
+      console.log('Está en una PC');
+      this.size = "40px"
+    } else {
+      console.log('Está en un móvil o tablet');
+      this.size = "64px"
+    }
+
     // mostrar la vida del jugador
     this.healthPlayerText = this.add.text(340, 74, t("health", { value: this.healthPlayer }), {
       fontFamily: 'MelodicaRegular',
-      fontSize: "40px",
+      fontSize: this.size,
       fill: "#fff",
     }).setOrigin(0.5, 0.5); // Align to the top-left corner
 
     this.moneyText = this.add.text(180, 138, this.money, {
       fontFamily: 'MelodicaRegular',
-      fontSize: "40px",
+      fontSize: this.size,
       fill: "#fff",
     }).setOrigin(0, 0.5); // Align to the top-left corner
 
@@ -262,7 +273,7 @@ export default class game extends Phaser.Scene {
 
     this.scoreText = this.add.text(180, 188, this.score, {
       fontFamily: 'MelodicaRegular',
-      fontSize: "40px",
+      fontSize: this.size,
       fill: "#fff",
     }).setOrigin(0, 0.5); // Align to the top-left corner
 
@@ -271,8 +282,18 @@ export default class game extends Phaser.Scene {
       fontFamily: 'MelodicaRegular',
       fontSize: "128px",
       fill: "#ff0000",
-      wordWrap: { width: 1200, useAdvancedWrap: true }, // <-- Aquí defines el ancho del "contenedor"
+      wordWrap: { width: 1200, useAdvancedWrap: true },
       align: 'center'
+    }).setOrigin(0.5, 0.5).setVisible(false).setAlpha(0); // Center the text
+
+    this.gameOverSubText = this.add.text(960, 440, t("finalScore", { value: this.score }), {
+      fontFamily: 'MelodicaRegular',
+      fontSize: this.size,
+      fill: "#ffffff",
+      wordWrap: { width: 600, useAdvancedWrap: true }, // <-- Aquí defines el ancho del "contenedor"
+      align: 'center',
+      stroke: "#000000",
+      strokeThickness: 8
     }).setOrigin(0.5, 0.5).setVisible(false).setAlpha(0); // Center the text
 
     this.enemyDefeatedText = this.add.text(960, 340, t("victory"), {
@@ -280,15 +301,19 @@ export default class game extends Phaser.Scene {
       fontSize: "128px",
       fill: "#ffd700",
       wordWrap: { width: 1200, useAdvancedWrap: true }, // <-- Aquí defines el ancho del "contenedor"
-      align: 'center'
+      align: 'center',
+      stroke: "#000000",
+      strokeThickness: 8
     }).setOrigin(0.5, 0.5).setVisible(false).setAlpha(0); // Center the text
 
-    this.enemyDefeatedSubText = this.add.text(960, 640, t("tips", { value: this.moneyQuantity }), {
+    this.enemyDefeatedSubText = this.add.text(960, 540, t("tips", { value: this.moneyQuantity }), {
       fontFamily: 'MelodicaRegular',
-      fontSize: "32px",
+      fontSize: this.size,
       fill: "#ffd700",
       wordWrap: { width: 600, useAdvancedWrap: true }, // <-- Aquí defines el ancho del "contenedor"
-      align: 'center'
+      align: 'center',
+      stroke: "#000000",
+      strokeThickness: 8
     }).setOrigin(0.5, 0.5).setVisible(false).setAlpha(0); // Center the text
 
     this.stopTimer = false;
@@ -826,9 +851,11 @@ export default class game extends Phaser.Scene {
     this.stopTimer = true;
     audioManager.stopAll(); // <--- Detiene la música y los MIDIs
     this.gameOverText.setVisible(true);
+    this.gameOverSubText.setVisible(true);
+    this.gameOverSubText.setText(t("finalScore", { value: this.score }))
 
     this.tweens.add({
-      targets: this.gameOverText,
+      targets: [this.gameOverText, this.gameOverSubText],
       alpha: 1,
       duration: 1000,
       ease: 'Power2',

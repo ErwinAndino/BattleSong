@@ -39,16 +39,22 @@ export default class store extends Phaser.Scene {
       fill: "#fff"
     }).setOrigin(0.5, 0.5);
 
-    this.controls = this.add.image(1820, 100, "buttons", 0).setScale(4).setOrigin(0.5, 0.5).setInteractive();
+    this.salir = this.add.text(1879, 50, t("exit"), {
+      fontFamily: 'MelodicaRegular',
+      fontSize: "64px",
+      fill: "#fff"
+    }).setOrigin(1, 0.5).setInteractive();
+
+    this.controls = this.add.image(1820, 950, "buttons", 0).setScale(4).setOrigin(0.5, 0.5).setInteractive();
 
 
-    this.add.text(1820, 20, t("buy"), {
+    this.add.text(1820, 870, t("buy"), {
       fontFamily: 'MelodicaRegular',
       fontSize: "32px",
       fill: "#fff"
     }).setOrigin(0.5, 0.5);
 
-    this.add.text(1820, 180, t("exit"), {
+    this.add.text(1820, 1030, t("exit"), {
       fontFamily: 'MelodicaRegular',
       fontSize: "32px",
       fill: "#fff"
@@ -63,15 +69,25 @@ export default class store extends Phaser.Scene {
     this.hpbarMiddle = this.add.sprite(locationTL + 192, 75, "hpbar_middle", 0).setOrigin(0, 0.5).setScale(6);
     this.hpbarRight = this.add.sprite(locationTL + 384, 75, "hpbar_right", 0).setOrigin(0, 0.5).setScale(6);
 
+    const device = this.sys.game.device;
+
+    if (device.os.desktop) {
+      console.log('Está en una PC');
+      this.size = "40px"
+    } else {
+      console.log('Está en un móvil o tablet');
+      this.size = "64px"
+    }
+
     this.healthPlayerText = this.add.text(340, 74, t("health", { value: this.healthPlayer }), {
       fontFamily: 'MelodicaRegular',
-      fontSize: "40px",
+      fontSize: this.size,
       fill: "#fff",
     }).setOrigin(0.5, 0.5);
 
     this.moneyText = this.add.text(180, 138, this.money, {
       fontFamily: 'MelodicaRegular',
-      fontSize: "40px",
+      fontSize: this.size,
       fill: "#fff",
     }).setOrigin(0, 0.5); // Align to the top-left corner x 50 y -2
 
@@ -83,7 +99,7 @@ export default class store extends Phaser.Scene {
 
     this.scoreText = this.add.text(180, 188, this.score, {
       fontFamily: 'MelodicaRegular',
-      fontSize: "40px",
+      fontSize: this.size,
       fill: "#fff",
     }).setOrigin(0, 0.5); // Align to the top-left corner
 
@@ -186,17 +202,23 @@ export default class store extends Phaser.Scene {
 
     this.exitNo = this.add.text(960, 480, t("no"), {
       fontFamily: 'MelodicaRegular',
-      fontSize: "64px",
+      fontSize: "80px",
       fill: "#fff"
-    }).setOrigin(0.5, 0.5).setVisible(false);
+    }).setOrigin(0.5, 0.5).setVisible(false).setInteractive();
 
     this.exitYes = this.add.text(960, 800, t("yes"), {
       fontFamily: 'MelodicaRegular',
-      fontSize: "64px",
+      fontSize: "80px",
       fill: "#fff"
-    }).setOrigin(0.5, 0.5).setVisible(false);
+    }).setOrigin(0.5, 0.5).setVisible(false).setInteractive();
 
-    this.controls.on('pointerdown', () => {
+    this.salir.on('pointerdown', () => {
+      this.exitMessage();
+    });
+    this.exitNo.on('pointerdown', () => {
+      this.exitMessageReturn();
+    });
+    this.exitYes.on('pointerdown', () => {
       this.exit();
     });
 
@@ -205,13 +227,7 @@ export default class store extends Phaser.Scene {
 
     if (Phaser.Input.Keyboard.JustDown(this.keyW) || Phaser.Input.Keyboard.JustDown(this.cursors.up) || Phaser.Input.Keyboard.JustDown(this.keyEnter)) {
       if (this.exitActive) {
-        this.exitActive = false;
-        this.exitText.setVisible(false);
-        this.exitImage.setVisible(false);
-        this.controlsExit.setVisible(false);
-        this.exitNo.setVisible(false);
-        this.exitYes.setVisible(false);
-        this.overlay.setVisible(false);
+        this.exitMessageReturn();
         return
       }
       this.buySelectedItem();
@@ -225,13 +241,7 @@ export default class store extends Phaser.Scene {
       if (this.exitActive) {
         this.exit();
       } else {
-        this.exitActive = true;
-        this.exitText.setVisible(true);
-        this.exitImage.setVisible(true);
-        this.controlsExit.setVisible(true);
-        this.exitNo.setVisible(true);
-        this.exitYes.setVisible(true);
-        this.overlay.setVisible(true);
+        this.exitMessage();
       }
 
     }
@@ -400,6 +410,24 @@ export default class store extends Phaser.Scene {
     }
   }
 
+  exitMessage() {
+    this.exitActive = true;
+    this.exitText.setVisible(true);
+    this.exitImage.setVisible(true);
+    this.controlsExit.setVisible(true);
+    this.exitNo.setVisible(true);
+    this.exitYes.setVisible(true);
+    this.overlay.setVisible(true);
+  }
+  exitMessageReturn() {
+    this.exitActive = false;
+    this.exitText.setVisible(false);
+    this.exitImage.setVisible(false);
+    this.controlsExit.setVisible(false);
+    this.exitNo.setVisible(false);
+    this.exitYes.setVisible(false);
+    this.overlay.setVisible(false);
+  }
 
   exit() {
     this.scene.start("game", {
