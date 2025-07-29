@@ -743,7 +743,7 @@ export default class game extends Phaser.Scene {
         oldestIndicator.destroy();
         this.score += Math.ceil(2 * oldestIndicator.fail + this.scoreMult); // Incrementa el score
         if (oldestIndicator.fail === 3) {
-          this.scoreText.setColor("#e4bf1bff")
+          this.scoreText.setColor("#c91be4ff")
           this.tweens.add({
             targets: this.scoreText,
             scale: 1.5,

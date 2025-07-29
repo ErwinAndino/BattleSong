@@ -106,13 +106,15 @@ export default class store extends Phaser.Scene {
 
 
     this.buyText = this.add.text(960, 200, t("bought"), {
+      fontFamily: 'MelodicaRegular',
       fontSize: "40px",
-      color: "#0f0"
+      color: "#33de11ff"
     }).setOrigin(0.5, 0.5).setVisible(false);
 
     this.cantBuyText = this.add.text(960, 200, t("cantBuy"), {
+      fontFamily: 'MelodicaRegular',
       fontSize: "40px",
-      color: "#0f0"
+      color: "#ffffff"
     }).setOrigin(0.5, 0.5).setVisible(false);
 
 
