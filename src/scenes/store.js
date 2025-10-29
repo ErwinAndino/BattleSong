@@ -13,7 +13,7 @@ export default class store extends Phaser.Scene {
     this.soundValue = data.soundValue || 100; // Valor inicial del volumen
     this.tutorialComplete = data.tutorialComplete || false; // Valor inicial del tutorial
     this.healthPlayer = data.healthPlayer || 100; // Valor inicial de la salud del jugador
-    this.difficulty = data.difficulty || 0; // Dificultad del juego
+    this.difficultyLevel = data.difficultyLevel || 0; // Dificultad del juego
   }
 
   preload() {
@@ -25,6 +25,7 @@ export default class store extends Phaser.Scene {
       frameWidth: 32,
       frameHeight: 32,
     });
+
   }
 
   create() {
@@ -38,16 +39,22 @@ export default class store extends Phaser.Scene {
       fill: "#fff"
     }).setOrigin(0.5, 0.5);
 
-    this.controls = this.add.image(1820, 100, "buttons", 0).setScale(4).setOrigin(0.5, 0.5);
+    this.salir = this.add.text(1879, 50, t("exit"), {
+      fontFamily: 'MelodicaRegular',
+      fontSize: "64px",
+      fill: "#fff"
+    }).setOrigin(1, 0.5).setInteractive();
+
+    this.controls = this.add.image(1820, 950, "buttons", 0).setScale(4).setOrigin(0.5, 0.5).setInteractive();
 
 
-    this.add.text(1820, 20, t("buy"), {
+    this.add.text(1820, 870, t("buy"), {
       fontFamily: 'MelodicaRegular',
       fontSize: "32px",
       fill: "#fff"
     }).setOrigin(0.5, 0.5);
 
-    this.add.text(1820, 180, t("exit"), {
+    this.add.text(1820, 1030, t("exit"), {
       fontFamily: 'MelodicaRegular',
       fontSize: "32px",
       fill: "#fff"
@@ -62,35 +69,52 @@ export default class store extends Phaser.Scene {
     this.hpbarMiddle = this.add.sprite(locationTL + 192, 75, "hpbar_middle", 0).setOrigin(0, 0.5).setScale(6);
     this.hpbarRight = this.add.sprite(locationTL + 384, 75, "hpbar_right", 0).setOrigin(0, 0.5).setScale(6);
 
+    const device = this.sys.game.device;
+
+    if (device.os.desktop) {
+      console.log('Está en una PC');
+      this.size = "40px"
+    } else {
+      console.log('Está en un móvil o tablet');
+      this.size = "64px"
+    }
+
     this.healthPlayerText = this.add.text(340, 74, t("health", { value: this.healthPlayer }), {
       fontFamily: 'MelodicaRegular',
-      fontSize: "40px",
+      fontSize: this.size,
       fill: "#fff",
     }).setOrigin(0.5, 0.5);
 
-
-
-    this.moneyText = this.add.text(120, 130, t("money", { value: this.money }), {
+    this.moneyText = this.add.text(180, 138, this.money, {
       fontFamily: 'MelodicaRegular',
-      fontSize: "40px",
+      fontSize: this.size,
+      fill: "#fff",
+    }).setOrigin(0, 0.5); // Align to the top-left corner x 50 y -2
+
+    this.moneyImage = this.physics.add.sprite(140, 140, "gold", 0).setScale(2).setOrigin(0.5, 0.5);
+    this.moneyImage.anims.play("gold_anim", true);
+
+    this.scoreImage = this.add.sprite(140, 190, "score", 0).setScale(2).setOrigin(0.5, 0.5);
+    this.scoreImage.anims.play("score_anim", true);
+
+    this.scoreText = this.add.text(180, 188, this.score, {
+      fontFamily: 'MelodicaRegular',
+      fontSize: this.size,
       fill: "#fff",
     }).setOrigin(0, 0.5); // Align to the top-left corner
 
 
-    this.scoreText = this.add.text(120, 170, t("score", { value: this.score }), {
-      fontFamily: 'MelodicaRegular',
-      fontSize: "40px",
-      fill: "#fff",
-    }).setOrigin(0, 0.5); // Align to the top-left corner
 
     this.buyText = this.add.text(960, 200, t("bought"), {
+      fontFamily: 'MelodicaRegular',
       fontSize: "40px",
-      color: "#0f0"
+      color: "#33de11ff"
     }).setOrigin(0.5, 0.5).setVisible(false);
 
     this.cantBuyText = this.add.text(960, 200, t("cantBuy"), {
+      fontFamily: 'MelodicaRegular',
       fontSize: "40px",
-      color: "#0f0"
+      color: "#ffffff"
     }).setOrigin(0.5, 0.5).setVisible(false);
 
 
@@ -101,13 +125,14 @@ export default class store extends Phaser.Scene {
     this.keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
     this.keyS = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
     this.keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+    this.keyEnter = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
 
     // Ejemplo de datos (puedes reemplazarlo por tus propios datos)
     const items = [
       { key: "potion", label: t("potion"), price: 50 },
       { key: "potion", label: t("potion"), price: 25 },
       { key: "potion", label: t("potion"), price: 50 },
-      { key: "potion", label: t("potion"), price: 50 },
+      { key: "potion", label: t("potion"), price: 10 },
       { key: "potion", label: t("potion"), price: 10 },
 
       // Agrega más objetos aquí según lo necesites
@@ -126,13 +151,36 @@ export default class store extends Phaser.Scene {
     for (let i = 0; i < this.seleccionados.length; i++) {
       const item = this.seleccionados[i];
       const x = startX + i * gap;
-      const img = this.add.image(x, 640, item.key).setScale(8);
-      const label = this.add.text(x, 800, `${item.label} - ${item.price}`, {
+      const img = this.add.image(x, 640, item.key).setScale(8).setInteractive();
+      const m = this.add.sprite(x - 20, 900, "gold", 0).setScale(2).setOrigin(0.5, 0.5);
+      m.anims.play("gold_anim", true);
+      const label = this.add.text(x, 800, `${item.label}`, {
         fontFamily: 'MelodicaRegular',
         fontSize: "64px",
         fill: "#fff"
       }).setOrigin(0.5, 0.5);
-      this.itemImages.push({ img, label });
+      const price = this.add.text(x + 20, 898, `${item.price}`, {
+        fontFamily: 'MelodicaRegular',
+        fontSize: "40px",
+        fill: "#fff"
+      }).setOrigin(0, 0.5);
+
+      img.on("pointerdown", () => {
+        if (this.exitActive) return;
+
+        const index = this.itemImages.findIndex(obj => obj.img === img);
+
+        if (index === -1) return;
+
+        if (this.selectedIndex != index) {
+          this.selectedIndex = index; // Cambia el ítem seleccionado
+          this.highlightSelection(); // Aplica el efecto visual
+          return
+        }
+        this.buySelectedItem();
+      });
+
+      this.itemImages.push({ img, label, price, m });
     }
     this.selectedIndex = 0;
     this.item = this.seleccionados[this.selectedIndex];
@@ -158,42 +206,42 @@ export default class store extends Phaser.Scene {
 
     this.exitNo = this.add.text(960, 480, t("no"), {
       fontFamily: 'MelodicaRegular',
-      fontSize: "64px",
+      fontSize: "80px",
       fill: "#fff"
-    }).setOrigin(0.5, 0.5).setVisible(false);
+    }).setOrigin(0.5, 0.5).setVisible(false).setInteractive();
 
     this.exitYes = this.add.text(960, 800, t("yes"), {
       fontFamily: 'MelodicaRegular',
-      fontSize: "64px",
+      fontSize: "80px",
       fill: "#fff"
-    }).setOrigin(0.5, 0.5).setVisible(false);
+    }).setOrigin(0.5, 0.5).setVisible(false).setInteractive();
+
+    this.salir.on('pointerover', () => {
+      this.salir.setColor("#ffd700")
+    });
+    this.salir.on('pointerout', () => {
+      this.salir.setColor("#ffffff")
+    });
+
+    this.salir.on('pointerdown', () => {
+      this.exitMessage();
+    });
+    this.exitNo.on('pointerdown', () => {
+      this.exitMessageReturn();
+    });
+    this.exitYes.on('pointerdown', () => {
+      this.exit();
+    });
 
   }
   update() {
 
-    if (Phaser.Input.Keyboard.JustDown(this.keyW) || Phaser.Input.Keyboard.JustDown(this.cursors.up)) {
+    if (Phaser.Input.Keyboard.JustDown(this.keyW) || Phaser.Input.Keyboard.JustDown(this.cursors.up) || Phaser.Input.Keyboard.JustDown(this.keyEnter)) {
       if (this.exitActive) {
-        this.exitActive = false;
-        this.exitText.setVisible(false);
-        this.exitImage.setVisible(false);
-        this.controlsExit.setVisible(false);
-        this.exitNo.setVisible(false);
-        this.exitYes.setVisible(false);
-        this.overlay.setVisible(false);
+        this.exitMessageReturn();
         return
       }
-      if (this.money >= this.item.price) {
-        this.buySelectedItem();
-        this.money -= this.item.price;
-        this.moneyText.setText(t("money", { value: this.money }))
-      } else {
-        this.buyText.setVisible(false);
-        this.cantBuyText.setVisible(true);
-
-        this.time.delayedCall(3000, () => {
-          this.cantBuyText.setVisible(false);
-        });
-      }
+      this.buySelectedItem();
     }
     if (Phaser.Input.Keyboard.JustDown(this.keyA) || Phaser.Input.Keyboard.JustDown(this.cursors.left)) {
       this.selectedIndex = (this.selectedIndex - 1 + this.itemImages.length) % this.itemImages.length;
@@ -204,13 +252,7 @@ export default class store extends Phaser.Scene {
       if (this.exitActive) {
         this.exit();
       } else {
-        this.exitActive = true;
-        this.exitText.setVisible(true);
-        this.exitImage.setVisible(true);
-        this.controlsExit.setVisible(true);
-        this.exitNo.setVisible(true);
-        this.exitYes.setVisible(true);
-        this.overlay.setVisible(true);
+        this.exitMessage();
       }
 
     }
@@ -273,8 +315,6 @@ export default class store extends Phaser.Scene {
       obj.label.setStyle({ fontStyle: i === this.selectedIndex ? 'bold' : 'normal' });
       obj.label.setColor(i === this.selectedIndex ? "#ffd700" : "#fff"); // Amarillo si seleccionado, blanco si no
 
-
-
       // Calcula la posición Y objetivo
       const targetY = i === this.selectedIndex ? 540 : 640; // Arriba si seleccionado, abajo si no
 
@@ -294,46 +334,110 @@ export default class store extends Phaser.Scene {
         ease: 'Power2'
       });
 
+      this.tweens.add({
+        targets: obj.m,
+        y: i === this.selectedIndex ? 800 : 900,
+        duration: 200,
+        ease: 'Power2'
+      });
+
+      this.tweens.add({
+        targets: obj.price,
+        y: i === this.selectedIndex ? 798 : 898,
+        duration: 200,
+        ease: 'Power2'
+      });
+
+
     });
   }
 
   // Acción de compra
   buySelectedItem() {
+    const item = this.itemImages[this.selectedIndex];
+    if (!item) return;
 
-    if (this.item.key === "potion") {
-      this.healthPlayer += 30;
-      if (this.healthPlayer > 100) {
-        this.healthPlayer = 100; // Limitar la salud máxima a 100
-      }
-      this.healthPlayerText.setText(t("health", { value: this.healthPlayer }));
+    const selectedItemData = this.seleccionados[this.selectedIndex];
+    if (!selectedItemData) return;
+
+    // Verifica dinero
+    if (this.money >= selectedItemData.price) {
+      audioManager.playSound(0, 0.2, 1);
+      this.money -= selectedItemData.price;
+      this.moneyText.setText(this.money);
+
+      // Animación visual
+      this.tweens.add({
+        targets: this.moneyImage,
+        scale: 3,
+        duration: 300,
+        yoyo: true,
+        ease: 'Power2',
+      });
+    } else {
+      // No alcanza el dinero
+      audioManager.playSound(0, 0.2, -1);
+      this.buyText.setVisible(false);
+      this.cantBuyText.setVisible(true);
+      this.time.delayedCall(3000, () => this.cantBuyText.setVisible(false));
+      return;
     }
-    // Aquí va tu lógica de compra, por ejemplo:
-    this.buyText.setText(t("bought", { value: this.item.label }));
 
+    // Quitar visuales
+    item.img.destroy();
+    item.label.destroy();
+    item.price.destroy();
+    item.m.destroy();
+
+    // Remover del array visual y lógico
+    this.itemImages.splice(this.selectedIndex, 1);
+    this.seleccionados.splice(this.selectedIndex, 1);
+
+    // Corregir índice
+    if (this.selectedIndex >= this.itemImages.length) {
+      this.selectedIndex = this.itemImages.length - 1;
+    }
+
+    // Actualizar referencia a item (si quedan)
+    if (this.itemImages.length > 0) {
+      this.item = this.seleccionados[this.selectedIndex];
+      this.highlightSelection();
+      this.buyText.setText(t("bought", { value: this.item.label }));
+    } else {
+      this.item = null;
+      this.buyText.setText(t("bought_empty")); // O un texto genérico como "No quedan items"
+    }
+
+    // Mostrar mensaje de compra
     this.cantBuyText.setVisible(false);
     this.buyText.setVisible(true);
+    this.time.delayedCall(3000, () => this.buyText.setVisible(false));
 
-    this.time.delayedCall(3000, () => {
-      this.buyText.setVisible(false)
-    });
-
-    // Eliminar visualmente el ítem comprado
-    this.itemImages[this.selectedIndex].img.destroy();
-    this.itemImages[this.selectedIndex].label.destroy();
-
-    // Eliminar el ítem de los arrays
-    this.seleccionados.splice(this.selectedIndex, 1);
-    this.itemImages.splice(this.selectedIndex, 1);
-
-    // Ajustar el índice seleccionado
-    if (this.selectedIndex >= this.itemImages.length) {
-      this.selectedIndex = Math.max(0, this.itemImages.length - 1);
+    // Lógica según el tipo del ítem
+    if (selectedItemData.key === "potion") {
+      this.healthPlayer += 30;
+      if (this.healthPlayer > 100) this.healthPlayer = 100;
+      this.healthPlayerText.setText(t("health", { value: this.healthPlayer }));
     }
+  }
 
-    // Actualizar la selección visual si quedan ítems
-    if (this.itemImages.length > 0) {
-      this.highlightSelection();
-    }
+  exitMessage() {
+    this.exitActive = true;
+    this.exitText.setVisible(true);
+    this.exitImage.setVisible(true);
+    this.controlsExit.setVisible(true);
+    this.exitNo.setVisible(true);
+    this.exitYes.setVisible(true);
+    this.overlay.setVisible(true);
+  }
+  exitMessageReturn() {
+    this.exitActive = false;
+    this.exitText.setVisible(false);
+    this.exitImage.setVisible(false);
+    this.controlsExit.setVisible(false);
+    this.exitNo.setVisible(false);
+    this.exitYes.setVisible(false);
+    this.overlay.setVisible(false);
   }
 
   exit() {
@@ -344,7 +448,7 @@ export default class store extends Phaser.Scene {
       tutorialComplete: this.tutorialComplete,
       healthPlayer: this.healthPlayer,
       hiScore: this.hiScore,
-      difficulty: this.difficulty
+      difficultyLevel: this.difficultyLevel
     });
   }
 }

@@ -17,9 +17,12 @@ class AudioManager {
 
     this.setupVisibilityHandler();
   }
+  async unlock() {
+    await Tone.start();
+  }
 
   async start() {
-    await Tone.start();
+
     await Promise.all([
       this.loadSynth(0, "synth"),
       this.loadSynth(1, "poly"),
@@ -259,6 +262,19 @@ class AudioManager {
       }
     });
   }
+
+  playSound(index = 0, duration = 0.5, tone = 1) {
+    // MIDI de C4 = 60, A4 = 69
+    const minMidi = 60 + (12 * tone);
+    const maxMidi = 72 + (12 * tone);
+    const randomMidi = Math.floor(Math.random() * (maxMidi - minMidi + 1)) + minMidi;
+    const randomNote = Tone.Frequency(randomMidi, "midi").toNote();
+
+    if (this.instruments[index] && this.instruments[index].triggerAttackRelease) {
+      this.instruments[index].triggerAttackRelease(randomNote, duration, Tone.now());
+    }
+  }
+
 }
 
 const audioManager = new AudioManager();
