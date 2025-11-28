@@ -199,15 +199,26 @@ export default class tutorial extends Phaser.Scene {
         this.money = 0;
         this.score = 0
 
+        const device = this.sys.game.device;
+
+        if (device.os.desktop) {
+            console.log('Está en una PC');
+            this.size = "40px"
+            this.sizeTutorial = "32px"
+        } else {
+            console.log('Está en un móvil o tablet');
+            this.size = "64px"
+            this.sizeTutorial = "64px"
+        }
         this.healthPlayerText = this.add.text(340, 74, t("health", { value: 100 }), {
             fontFamily: 'MelodicaRegular',
-            fontSize: "40px",
+            fontSize: this.size,
             fill: "#fff",
         }).setOrigin(0.5, 0.5).setVisible(false).setAlpha(0); // Align to the top-left corner
 
         this.moneyText = this.add.text(180, 138, this.money, {
             fontFamily: 'MelodicaRegular',
-            fontSize: "40px",
+            fontSize: this.size,
             fill: "#fff",
         }).setOrigin(0, 0.5).setVisible(false).setAlpha(0); // Align to the top-left corner
 
@@ -219,7 +230,7 @@ export default class tutorial extends Phaser.Scene {
 
         this.scoreText = this.add.text(180, 188, this.score, {
             fontFamily: 'MelodicaRegular',
-            fontSize: "40px",
+            fontSize: this.size,
             fill: "#fff",
         }).setOrigin(0, 0.5).setVisible(false).setAlpha(0); // Align to the top-left corner
 
@@ -255,16 +266,15 @@ export default class tutorial extends Phaser.Scene {
             { text: t("tutorialScore"), x: 250, y: 190 },
         ]
 
-
         this.tutorialBox = this.add.text(2000, 540, "", {
             fontFamily: 'MelodicaRegular',
-            fontSize: "32px",
+            fontSize: this.sizeTutorial,
             fill: "#fff",
             wordWrap: { width: 440, useAdvancedWrap: true },
             align: 'justify',
             stroke: "#000000ff",
             strokeThickness: 2
-        }).setOrigin(0, 0.5).setDepth(14);
+        }).setOrigin(0, 0).setDepth(14);
 
         this.tutorialIndex = 0
 
